@@ -6,40 +6,45 @@
 namespace rv {
 
 // rv interger registers
+/*
+    FIX these comment by reading the risc-v ABI, 
+    and u should figure out the role of every register in function call, 
+    including its saver(caller/callee)
+*/
 enum class rvREG {
-    /* Xn       its ABI name*/
-    X0,         // zero
-    X1,         // ra
-    X2,         // sp
-    X3,         // gp
-    X4,         // tp
-    X5,         // t0
-    X6,         // .... FIX these comment by reading the risc-v ABI, and u should figure out the role of every register in function call, including its saver(caller/callee)
-    X7,
-    X8,
-    X9,
-    X10,
-    X11,
-    X12,
-    X13,
-    X14,
-    X15,
-    X16,
-    X17,
-    X18,
-    X19,
-    X20,
-    X21,
-    X22,
-    X23,
-    X24,
-    X25,
-    X26,
-    X27,
-    X28,
-    X29,
-    X30,
-    X31,
+    /* Xn       its ABI name    role*/
+    X0,         // zero         Hardwired Zero
+    X1,         // ra           Return address
+    X2,         // sp           Stack pointer
+    X3,         // gp           Global pointer
+    X4,         // tp           Thread pointer
+    X5,         // t0           Temporary
+    X6,         // t1           Temporary
+    X7,         // t2           Temporary
+    X8,         // s0 / fp      Saved register,frame pointer
+    X9,         // s1           Saved register
+    X10,        // a0           Function argument,return value
+    X11,        // a1           Function argument,return value
+    X12,        // a2           Function argument
+    X13,        // a3           Function argument
+    X14,        // a4           Function argument
+    X15,        // a5           Function argument
+    X16,        // a6           Function argument
+    X17,        // a7           Function argument
+    X18,        // s2           Saved register
+    X19,        // s3           Saved register
+    X20,        // s4           Saved register
+    X21,        // s5           Saved register
+    X22,        // s6           Saved register
+    X23,        // s7           Saved register
+    X24,        // s8           Saved register
+    X25,        // s9           Saved register
+    X26,        // s10          Saved register
+    X27,        // s11          Saved register
+    X28,        // t3           Temporary
+    X29,        // t4           Temporary
+    X30,        // t5           Temporary
+    X31,        // t6           Temporary
 };
 std::string toString(rvREG r);  // implement this in ur own way
 
