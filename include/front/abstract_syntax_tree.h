@@ -157,7 +157,7 @@ struct ConstDef: AstNode{
 struct ConstInitVal: AstNode{
     string v;
     Type t;
-
+    std::vector<ir::Operand> value;
     /**
      * @brief constructor
      */
@@ -186,6 +186,7 @@ struct InitVal: AstNode{
     bool is_computable = false;
     string v;
     Type t;
+    std::vector<ir::Operand> value;
 
     /**
      * @brief constructor
@@ -265,7 +266,10 @@ struct LVal: AstNode{
     bool is_computable = false;
     string v;
     Type t;
-    int i;  // array index, legal if t is IntPtr or FloatPtr
+    // int i;  // array index, legal if t is IntPtr or FloatPtr
+    ir::Operand i;
+    string arr_name;
+    bool is_arr_element = false;
 
     /**
      * @brief constructor
