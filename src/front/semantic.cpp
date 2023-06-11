@@ -1120,6 +1120,7 @@ void frontend::Analyzer::analysisStmt(Stmt *root, vector<ir::Instruction *> &buf
                     }
                     else
                     {
+                        buffer.push_back(new Instruction(src, {}, res, Operator::cvt_f2i));
                         assert(0 && "return type not match! [expected int]");
                     }
                 }
