@@ -11,103 +11,103 @@ std::string rv::toString(rvREG r)
     switch (r)
     {
     case rvREG::X0:
-        return "X0";
+        return "zero";
         break;
     case rvREG::X1:
-        return "X1";
+        return "ra";
         break;
     case rvREG::X2:
-        return "X2";
+        return "sp";
         break;
     case rvREG::X3:
-        return "X3";
+        return "gp";
         break;
     case rvREG::X4:
-        return "X4";
+        return "tp";
         break;
     case rvREG::X5:
-        return "X5";
+        return "t0";
         break;
     case rvREG::X6:
-        return "X6";
+        return "t1";
         break;
     case rvREG::X7:
-        return "X7";
+        return "t2";
         break;
     case rvREG::X8:
-        return "X8";
+        return "s0";
         break;
     case rvREG::X9:
-        return "X9";
+        return "s1";
         break;
     case rvREG::X10:
-        return "X10";
+        return "a0";
         break;
     case rvREG::X11:
-        return "X11";
+        return "a1";
         break;
     case rvREG::X12:
-        return "X12";
+        return "a2";
         break;
     case rvREG::X13:
-        return "X13";
+        return "a3";
         break;
     case rvREG::X14:
-        return "X14";
+        return "a4";
         break;
     case rvREG::X15:
-        return "X15";
+        return "a5";
         break;
     case rvREG::X16:
-        return "X16";
+        return "a6";
         break;
     case rvREG::X17:
-        return "X17";
+        return "a7";
         break;
     case rvREG::X18:
-        return "X18";
+        return "s2";
         break;
     case rvREG::X19:
-        return "X19";
+        return "s3";
         break;
     case rvREG::X20:
-        return "X20";
+        return "s4";
         break;
     case rvREG::X21:
-        return "X21";
+        return "s5";
         break;
     case rvREG::X22:
-        return "X22";
+        return "s6";
         break;
     case rvREG::X23:
-        return "X23";
+        return "s7";
         break;
     case rvREG::X24:
-        return "X24";
+        return "s8";
         break;
     case rvREG::X25:
-        return "X25";
+        return "s9";
         break;
     case rvREG::X26:
-        return "X26";
+        return "s10";
         break;
     case rvREG::X27:
-        return "X27";
+        return "s11";
         break;
     case rvREG::X28:
-        return "X28";
+        return "t3";
         break;
     case rvREG::X29:
-        return "X29";
+        return "t4";
         break;
     case rvREG::X30:
-        return "X30";
+        return "t5";
         break;
     case rvREG::X31:
-        return "X31";
+        return "t6";
         break;
     default:
-        assert(0 && "No This Kind Of rvREG");
+        assert(0 && "No Such Kind Of rvREG");
         break;
     }
 }
@@ -183,7 +183,7 @@ std::string rv::toString(rvOPCODE r)
     case rvOPCODE::J:
         return "J";
     default:
-        assert(0 && "No This Kind Of rvOPCODE");
+        assert(0 && "No Such Kind Of rvOPCODE");
         break;
     }
 }
@@ -193,71 +193,71 @@ std::string rv::toString(rvFREG r)
     switch (r)
     {
     case rvFREG::F0:
-        return "F0";
+        return "ft0";
     case rvFREG::F1:
-        return "F1";
+        return "ft1";
     case rvFREG::F2:
-        return "F2";
+        return "ft2";
     case rvFREG::F3:
-        return "F3";
+        return "ft3";
     case rvFREG::F4:
-        return "F4";
+        return "ft4";
     case rvFREG::F5:
-        return "F5";
+        return "ft5";
     case rvFREG::F6:
-        return "F6";
+        return "ft6";
     case rvFREG::F7:
-        return "F7";
+        return "ft7";
     case rvFREG::F8:
-        return "F8";
+        return "fs0";
     case rvFREG::F9:
-        return "F9";
+        return "fs1";
     case rvFREG::F10:
-        return "F10";
+        return "fa0";
     case rvFREG::F11:
-        return "F11";
+        return "fa1";
     case rvFREG::F12:
-        return "F12";
+        return "fa2";
     case rvFREG::F13:
-        return "F13";
+        return "fa3";
     case rvFREG::F14:
-        return "F14";
+        return "fa4";
     case rvFREG::F15:
-        return "F15";
+        return "fa5";
     case rvFREG::F16:
-        return "F16";
+        return "fa6";
     case rvFREG::F17:
-        return "F17";
+        return "fa7";
     case rvFREG::F18:
-        return "F18";
+        return "fs2";
     case rvFREG::F19:
-        return "F19";
+        return "fs3";
     case rvFREG::F20:
-        return "F20";
+        return "fs4";
     case rvFREG::F21:
-        return "F21";
+        return "fs5";
     case rvFREG::F22:
-        return "F22";
+        return "fs6";
     case rvFREG::F23:
-        return "F23";
+        return "fs7";
     case rvFREG::F24:
-        return "F24";
+        return "fs8";
     case rvFREG::F25:
-        return "F25";
+        return "fs9";
     case rvFREG::F26:
-        return "F26";
+        return "fs10";
     case rvFREG::F27:
-        return "F27";
+        return "fs11";
     case rvFREG::F28:
-        return "F28";
+        return "ft8";
     case rvFREG::F29:
-        return "F29";
+        return "ft9";
     case rvFREG::F30:
-        return "F30";
+        return "ft10";
     case rvFREG::F31:
-        return "F31";
+        return "ft11";
     default:
-        assert(0 && "No This Kind Of rvFREG");
+        assert(0 && "No Such Kind Of rvFREG");
         break;
     }
 }
