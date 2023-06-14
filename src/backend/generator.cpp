@@ -1,5 +1,5 @@
 #include "backend/generator.h"
-
+#include <iostream>
 #include <assert.h>
 // #include "generator.h"
 
@@ -21,7 +21,8 @@
     else                                                                                                                              \
     { /* 已找到 */                                                                                                                 \
         tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rs1) + "," + std::to_string(offset1) + "(sp)" + "\n"); \
-    }
+    }\
+    // std::cout << "--\n"<< tmp_out << "--\n";
 #define LOAD_RS2                                                                                                                      \
     int offset2 = stackmap.find_operand(inst.op2);                                                                                     \
     if (offset2 == -1)                                                                                                                 \
@@ -73,7 +74,7 @@
         }                                                                                                                            \
         else                                                                                                                         \
         { /* 在全局变量中未找到，在局部变量中为其分配空间 */                                                   \
-            offset = stackmap.add_operand(inst.op1);                                                                                 \
+            offset = stackmap.add_operand(inst.des);                                                                                 \
             tmp_out += ("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(sp)\n");  \
         }                                                                                                                            \
     }                                                                                                                                \
@@ -437,6 +438,7 @@ int backend::stackVarMap::add_operand(ir::Operand op, uint32_t size = 4)
     int offset = cur_off;
     _table[op.name] = offset;
     cur_off += size;
+    std::cout << "\t\tadd\t" << op.name << "\toffset:" << offset << "\n";
     return offset;
 }
 
@@ -444,8 +446,10 @@ void backend::Generator::gen()
 {
     // .option nopic
     fout << "\t.option nopic\n";
+    std::cout << "\t.option nopic\n";
     // .data
     fout << "\t.data\n";
+    std::cout<< "\t.data\n";
     // 添加全局变量 变量.word 0 数组.space 大小
     for (int i = 0; i < program.globalVal.size(); i++)
     {
@@ -453,32 +457,49 @@ void backend::Generator::gen()
         if (program.globalVal[i].val.type==ir::Type::IntLiteral){
             // 变量
             fout << "\t.global\t" << varname << "\n";
+            std::cout << "\t.global\t" << varname << "\n";
             fout << "\t.type\t" << varname << ",@object\n";
+            std::cout << "\t.type\t" << varname << ",@object\n";
             fout << "\t.size\t" << varname << ",4\n";
+            std::cout << "\t.size\t" << varname << ",4\n";
             fout << "\t.align\t4\n";
+            std::cout << "\t.align\t4\n";
             fout << varname << ":\n";
+            std::cout << varname << ":\n";
             fout << "\t.word\t0\n";
+            std::cout << "\t.word\t0\n";
         }else{
             assert(program.globalVal[i].val.type == ir::Type::IntPtr);
             // 数组
             fout << "\t.global\t" << varname << "\n";
+            std::cout << "\t.global\t" << varname << "\n";
             fout << "\t.type\t" << varname << ",@object\n";
+            std::cout << "\t.type\t" << varname << ",@object\n";
             fout << "\t.size\t" << varname << ","<< std::to_string(program.globalVal[i].maxlen*4) <<"\n";
+            std::cout << "\t.size\t" << varname << ","<< std::to_string(program.globalVal[i].maxlen*4) <<"\n";
             fout << "\t.align\t4\n";
+            std::cout << "\t.align\t4\n";
             fout << varname << ":\n";
+            std::cout << varname << ":\n";
             fout << "\t.space\t"<< std::to_string(program.globalVal[i].maxlen*4) <<"\n";
+            std::cout << "\t.space\t"<< std::to_string(program.globalVal[i].maxlen*4) <<"\n";
         }
     }
     // .text
     fout << "\t.text\n";
+    std::cout << "\t.text\n";
     // 添加函数
     for (int i = 0; i < program.functions.size();i++)
     {
         fout << "\t.global\t" << program.functions[i].name << "\n";
+        std::cout << "\t.global\t" << program.functions[i].name << "\n";
         fout << "\t.type\t" << program.functions[i].name << ",@function\n";
+        std::cout << "\t.type\t" << program.functions[i].name << ",@function\n";
         fout << program.functions[i].name << ":\n";
+        std::cout << program.functions[i].name << ":\n";
         gen_func(program.functions[i]);
-        fout << ("\t.size\t" + program.functions[i].name + ",-" + program.functions[i].name + "\n");
+        fout << ("\t.size\t" + program.functions[i].name + ", .-" + program.functions[i].name + "\n");
+        std::cout << ("\t.size\t" + program.functions[i].name + ", .-" + program.functions[i].name + "\n");
     }
 }
 
@@ -492,6 +513,7 @@ void backend::Generator::gen_func(ir::Function &func)
         int offset = stackmap.add_operand(func.ParameterList[i]);
         tmp_var += ("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a" + std::to_string(i) + "," + std::to_string(offset) + "(sp)\n");
     }
+    std::cout << "Param Bingo!\n";
     // 分析指令，暂存
     std::string tmp_inst = "";
     for (int i = 0; i < func.InstVec.size(); i++)
@@ -499,20 +521,26 @@ void backend::Generator::gen_func(ir::Function &func)
         bool is_global_func = (func.name == "globalFunc");
         gen_instr(*func.InstVec[i], tmp_inst, is_global_func);
     }
+    std::cout << "Inst Bingo!\n";
     // 保存返回地址,暂存
     std::string tmp_addr = "";
     tmp_addr += ("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "ra" + "," + std::to_string(stackmap.cur_off) + "(sp)\n");
     stackmap.cur_off += 4;
+    std::cout << "RA Bingo!\n";
 
     // 正式开始：
     // 1.首先调整栈指针，为其分配空间[包括函数实参，返回地址，指令中的变量][get from cur_off]
     fout << ("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + "sp" + "," + "sp" + "," + std::to_string(-stackmap.cur_off) + "\n");
+    std::cout << ("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + "sp" + "," + "sp" + "," + std::to_string(-stackmap.cur_off) + "\n");
     // 2.处理返回地址
     fout << tmp_addr;
+    std::cout << tmp_addr;
     // 3.处理实参
     fout << tmp_var;
+    std::cout << tmp_var;
     // 4.处理指令【包含return等操作】
     fout << tmp_inst;
+    std::cout << tmp_inst;
 }
 
 void backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, bool is_global_func)
@@ -751,6 +779,7 @@ void backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, 
             tmp_out += ("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
         }
         SAVE_BACK_RD;
+        std::cout << "\n" <<tmp_out<<"\n";
     }
     break;
 
@@ -974,7 +1003,7 @@ void backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, 
             }
             else
             { /* 在全局变量中未找到，在局部变量中为其分配空间 */
-                offset = stackmap.add_operand(inst.op1);
+                offset = stackmap.add_operand(inst.des);
                 tmp_out += ("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a0" + "," + std::to_string(offset) + "(sp)\n");
             }
         }
@@ -1015,6 +1044,7 @@ void backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, 
         tmp_out += ("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + "sp" + "," + "sp" + "," + std::to_string(stackmap.cur_off + 4) + "\n");
         // 跳转返回
         tmp_out += ("\t" + rv::toString(rv::rvOPCODE::JR) + "\t" + "ra" + "\n");
+        // std::cout << tmp_out;
     }
     break;
 
