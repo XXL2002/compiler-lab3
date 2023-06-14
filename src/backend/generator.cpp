@@ -405,11 +405,13 @@ int backend::stackVarMap::find_operand(ir::Operand op)
     if (it == _table.end())
     {
         // 不在局部变量之中
+        std::cout << "\t\tfind\t" << op.name << "\tresult:False\n";
         return -1; // 出现0则表示未找到
     }
     else
     {
         // 在局部变量之中
+        std::cout << "\t\tfind\t" << op.name << "\tresult:" << _table[op.name] << "\n";
         return _table[op.name];
     }
 }
@@ -419,6 +421,7 @@ int backend::stackVarMap::find_operand(ir::Operand op)
 /// @return the label name
 bool backend::Generator::find_operand_global(ir::Operand op)
 {
+    std::cout << "\t\tfindGlobal\t" << op.name << "\n";
     for (auto it = program.globalVal.begin(); it != program.globalVal.end(); it++)
     {
         if (it->val.name == op.name)
@@ -692,6 +695,7 @@ void backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, 
 
         tmp_out += ("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs2) + "\n");
         SAVE_BACK_RD;
+        // std::cout << tmp_out;
     }
     break;
 
@@ -779,7 +783,7 @@ void backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, 
             tmp_out += ("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
         }
         SAVE_BACK_RD;
-        std::cout << "\n" <<tmp_out<<"\n";
+        // std::cout << "\n" <<tmp_out<<"\n";
     }
     break;
 
@@ -925,11 +929,12 @@ void backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, 
     {
         rv::rvREG rs1 = getRs1(inst.op1); // 跳转条件
         rv::rvREG rd = getRd(inst.des);   // 偏移量
-        LOAD_RS1;
-        LOAD_RD;
+        // LOAD_RS1;
+        // LOAD_RD;
         // 获取偏移量【并*4】   可能是变量/常量
         if (inst.des.type == ir::Type::Int)
         {
+            LOAD_RD;
             // 偏移量为变量[左移两位]
             tmp_out += ("\t" + rv::toString(rv::rvOPCODE::SLLI) + "\t" + rv::toString(rd) + "," + rv::toString(rd) + "," + std::to_string(2) + "\n");
             if (inst.op1.type == ir::Type::null)
@@ -940,6 +945,7 @@ void backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, 
             else
             {
                 // 有条件跳转   beqz + j
+                LOAD_RS1;
                 tmp_out += ("\t" + rv::toString(rv::rvOPCODE::BEQZ) + "\t" + rv::toString(rs1) + ",8\n");
                 tmp_out += ("\t" + rv::toString(rv::rvOPCODE::JR) + "\t" + rv::toString(rd) + "\n");
             }
@@ -956,9 +962,11 @@ void backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, 
             else
             {
                 // 有条件跳转   bnez
+                LOAD_RS1;
                 tmp_out += ("\t" + rv::toString(rv::rvOPCODE::BNEZ) + "\t" + rv::toString(rs1) + "," + off + "\n");
             }
         }
+        // std::cout << tmp_out;
     }
     break;
 
@@ -979,8 +987,13 @@ void backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, 
                     tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a" + std::to_string(i) + "," + "0(" + rv::toString(tmp) + ")\n");
                 }
                 else
-                { /* 在全局变量中未找到，报错 */
-                    assert(0 && "Can Not Find The Param");
+                { /* 在全局变量中未找到 */
+                    // 可能是常量
+                    if (callinst->argumentList[i].type!=ir::Type::IntLiteral)
+                    {
+                        assert(0 && "Can Not Find The Param");
+                    }
+                    tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LI) + "\t" + "a" + std::to_string(i) + "," + callinst->argumentList[i].name + "\n");
                 }
             }
             else
