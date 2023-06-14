@@ -442,7 +442,6 @@ int backend::stackVarMap::add_operand(ir::Operand op, uint32_t size = 4)
 
 void backend::Generator::gen()
 {
-    TODO;
     // .option nopic
     fout << "\t.option nopic\n";
     // .data
@@ -998,8 +997,9 @@ void backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, 
                 tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a0" + ",0(" + rv::toString(rs1) + ")\n");
             }
             else
-            { /* 在全局变量中未找到，报错 */
-                assert(0 && "Can Not Find The Return OP");
+            { /* 在全局变量中未找到 */
+                if (inst.op1.type!=ir::Type::null)
+                    assert(0 && "Can Not Find The Return OP");
             }
         }
         else
