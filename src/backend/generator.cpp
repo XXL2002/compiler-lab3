@@ -727,7 +727,7 @@ void backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, 
     {
         rv::rvREG rs1 = getRs1(inst.op1);
         rv::rvREG rd = getRd(inst.des);
-        LOAD_RS1;
+        // LOAD_RS1;
 
         rv::rv_inst *op_inst = new rv::rv_inst();
 
@@ -743,6 +743,7 @@ void backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, 
         else
         {
             // MV
+            LOAD_RS1;
             op_inst->op = rv::rvOPCODE::MV;
             op_inst->rs1 = rs1;
             op_inst->rd = rd;
