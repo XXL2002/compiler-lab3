@@ -28,7 +28,7 @@ struct stackVarMap {
      * @param[in] size: the space needed(in byte)
      * @return the offset
     */
-    int add_operand(ir::Operand, uint32_t size = 4);
+    int add_operand(ir::Operand, uint32_t );
 };
 
 

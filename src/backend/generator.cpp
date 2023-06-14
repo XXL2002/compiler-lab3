@@ -1,12 +1,12 @@
 #include "backend/generator.h"
 
 #include <assert.h>
-#include "generator.h"
+// #include "generator.h"
 
 #define TODO assert(0 && "todo")
 #define LOAD_RS1                                                                                                                      \
-    int offset = stackmap.find_operand(inst.op1);                                                                                     \
-    if (offset == -1)                                                                                                                 \
+    int offset1 = stackmap.find_operand(inst.op1);                                                                                     \
+    if (offset1 == -1)                                                                                                                 \
     { /* 未在局部变量中找到*/                                                                                                \
         if (find_operand_global(inst.op1))                                                                                            \
         { /* 在全局变量中找到，直接用标签 */                                                                            \
@@ -20,11 +20,11 @@
     }                                                                                                                                 \
     else                                                                                                                              \
     { /* 已找到 */                                                                                                                 \
-        tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rs1) + "," + std::to_string(offset) + "(sp)" + "\n"); \
+        tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rs1) + "," + std::to_string(offset1) + "(sp)" + "\n"); \
     }
 #define LOAD_RS2                                                                                                                      \
-    int offset = stackmap.find_operand(inst.op2);                                                                                     \
-    if (offset == -1)                                                                                                                 \
+    int offset2 = stackmap.find_operand(inst.op2);                                                                                     \
+    if (offset2 == -1)                                                                                                                 \
     { /* 未在局部变量中找到*/                                                                                                \
         if (find_operand_global(inst.op2))                                                                                            \
         { /* 在全局变量中找到，直接用标签 */                                                                            \
@@ -38,11 +38,11 @@
     }                                                                                                                                 \
     else                                                                                                                              \
     { /* 已找到 */                                                                                                                 \
-        tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rs2) + "," + std::to_string(offset) + "(sp)" + "\n"); \
+        tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rs2) + "," + std::to_string(offset2) + "(sp)" + "\n"); \
     }
 #define LOAD_RD                                                                                                                      \
-    int offset = stackmap.find_operand(inst.des);                                                                                    \
-    if (offset == -1)                                                                                                                \
+    int offsetd = stackmap.find_operand(inst.des);                                                                                    \
+    if (offsetd == -1)                                                                                                                \
     { /* 未在局部变量中找到*/                                                                                               \
         if (find_operand_global(inst.des))                                                                                           \
         { /* 在全局变量中找到，直接用标签 */                                                                           \
@@ -56,7 +56,7 @@
     }                                                                                                                                \
     else                                                                                                                             \
     { /* 已找到 */                                                                                                                \
-        tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(sp)" + "\n"); \
+        tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + std::to_string(offsetd) + "(sp)" + "\n"); \
     }
 #define LOAD_RS1_RS2 \
     LOAD_RS1;        \
