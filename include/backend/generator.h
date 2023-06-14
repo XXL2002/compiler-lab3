@@ -14,7 +14,7 @@ namespace backend {
 
 // it is a map bewteen variable and its mem addr, the mem addr of a local variable can be identified by ($sp + off)
 struct stackVarMap {
-    std::map<ir::Operand, int> _table;
+    std::map<std::string, int> _table;
     int cur_off = 0;    // add
 
     /**

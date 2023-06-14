@@ -400,7 +400,7 @@ rv::rvFREG backend::Generator::fgetRs2(ir::Operand)
 /// @return the offset
 int backend::stackVarMap::find_operand(ir::Operand op)
 {
-    auto it = _table.find(op);
+    auto it = _table.find(op.name);
     if (it == _table.end())
     {
         // 不在局部变量之中
@@ -409,7 +409,7 @@ int backend::stackVarMap::find_operand(ir::Operand op)
     else
     {
         // 在局部变量之中
-        return _table[op];
+        return _table[op.name];
     }
 }
 
@@ -435,7 +435,7 @@ bool backend::Generator::find_operand_global(ir::Operand op)
 int backend::stackVarMap::add_operand(ir::Operand op, uint32_t size = 4)
 {
     int offset = cur_off;
-    _table[op] = offset;
+    _table[op.name] = offset;
     cur_off += size;
     return offset;
 }
