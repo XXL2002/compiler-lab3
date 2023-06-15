@@ -940,40 +940,20 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, b
         rv::rvREG rd = getRd(inst.des);   // 偏移量
         // LOAD_RS1;
         // LOAD_RD;
-        // 获取偏移量【并*4】   可能是变量/常量
-        if (inst.des.type == ir::Type::Int)
+        // 获取偏移量【并*4】   
+        // 偏移量只可能为常量[×4]
+        assert(inst.des.type != ir::Type::Int);
+        std::string off = std::to_string(std::stoi(inst.des.name) * 4);
+        if (inst.op1.type == ir::Type::null)
         {
-            LOAD_RD;
-            // 偏移量为变量[左移两位]
-            tmp_out += ("\t" + rv::toString(rv::rvOPCODE::SLLI) + "\t" + rv::toString(rd) + "," + rv::toString(rd) + "," + std::to_string(2) + "\n");
-            if (inst.op1.type == ir::Type::null)
-            {
-                // 无条件跳转   j
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::JR) + "\t" + rv::toString(rd) + "\n");
-            }
-            else
-            {
-                // 有条件跳转   beqz + j
-                LOAD_RS1;
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::BEQZ) + "\t" + rv::toString(rs1) + ",8\n");
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::JR) + "\t" + rv::toString(rd) + "\n");
-            }
+            // 无条件跳转   j
+            tmp_out += ("\t" + rv::toString(rv::rvOPCODE::J) + "\t" + off + "\n");
         }
         else
         {
-            // 偏移量为常量[×4]
-            std::string off = std::to_string(std::stoi(inst.des.name) * 4);
-            if (inst.op1.type == ir::Type::null)
-            {
-                // 无条件跳转   j
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::J) + "\t" + off + "\n");
-            }
-            else
-            {
-                // 有条件跳转   bnez
-                LOAD_RS1;
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::BNEZ) + "\t" + rv::toString(rs1) + "," + off + "\n");
-            }
+            // 有条件跳转   bnez
+            LOAD_RS1;
+            tmp_out += ("\t" + rv::toString(rv::rvOPCODE::BNEZ) + "\t" + rv::toString(rs1) + "," + off + "\n");
         }
         // std::cout << tmp_out;
     }
