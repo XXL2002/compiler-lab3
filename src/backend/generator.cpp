@@ -41,23 +41,30 @@
     { /* 已找到 */                                                                                                                        \
         tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rs2) + "," + std::to_string(offset2) + "(sp)" + "\n"); \
     }
-#define LOAD_RD                                                                                                                             \
-    int offsetd = stackmap.find_operand(inst.des);                                                                                          \
-    if (offsetd == -1)                                                                                                                      \
-    { /* 未在局部变量中找到*/                                                                                                      \
-        if (find_operand_global(inst.des))                                                                                                  \
-        { /* 在全局变量中找到，直接用标签 */                                                                                  \
-            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rd) + "," + inst.des.name + "\n");                \
-            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + "0(" + rv::toString(rd) + ")\n");     \
-        }                                                                                                                                   \
-        else                                                                                                                                \
-        { /* 在全局变量中未找到，报错 */                                                                                        \
-            assert(0 && "Can Not Find The Operand DES");                                                                                    \
-        }                                                                                                                                   \
-    }                                                                                                                                       \
-    else                                                                                                                                    \
-    { /* 已找到 */                                                                                                                       \
-        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + std::to_string(offsetd) + "(sp)" + "\n"); \
+#define LOAD_RD                                                                                                                                 \
+    if (inst.des.type == ir::Type::Int)                                                                                                         \
+    { /*变量*/                                                                                                                                \
+        int offsetd = stackmap.find_operand(inst.des);                                                                                          \
+        if (offsetd == -1)                                                                                                                      \
+        { /* 未在局部变量中找到*/                                                                                                      \
+            if (find_operand_global(inst.des))                                                                                                  \
+            { /* 在全局变量中找到，直接用标签 */                                                                                  \
+                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rd) + "," + inst.des.name + "\n");                \
+                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + "0(" + rv::toString(rd) + ")\n");     \
+            }                                                                                                                                   \
+            else                                                                                                                                \
+            { /* 在全局变量中未找到，报错 */                                                                                        \
+                assert(0 && "Can Not Find The Operand DES");                                                                                    \
+            }                                                                                                                                   \
+        }                                                                                                                                       \
+        else                                                                                                                                    \
+        { /* 已找到 */                                                                                                                       \
+            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + std::to_string(offsetd) + "(sp)" + "\n"); \
+        }                                                                                                                                       \
+    }                                                                                                                                           \
+    else                                                                                                                                        \
+    { /*常量*/                                                                                                                                \
+        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LI) + "\t" + rv::toString(rd) + "," + inst.des.name + "\n");                        \
     }
 #define LOAD_RS1_RS2 \
     LOAD_RS1;        \
@@ -69,7 +76,7 @@
     { /* 未在局部变量中找到*/                                                                                                     \
         if (find_operand_global(inst.des))                                                                                                 \
         { /* 在全局变量中找到，直接用标签 */                                                                                 \
-            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs1) + "," + inst.op1.name + "\n");              \
+            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs1) + "," + inst.des.name + "\n");              \
             tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs1) + ")\n");        \
         }                                                                                                                                  \
         else                                                                                                                               \
@@ -423,7 +430,7 @@ int backend::stackVarMap::find_operand(ir::Operand op)
 /// @return the label name
 bool backend::Generator::find_operand_global(ir::Operand op)
 {
-    // std::cout << "\t\tfindGlobal\t" << op.name << "\n";
+    std::cout << "\t\tfindGlobal\t" << op.name << "\n";
     for (auto it = program.globalVal.begin(); it != program.globalVal.end(); it++)
     {
         if (it->val.name == op.name)
@@ -531,15 +538,15 @@ void backend::Generator::gen_func(ir::Function &func)
         gen_instr(*func.InstVec[i], tmp_inst, is_global_func);
         tmp_inst_vec.push_back(tmp_inst);
     }
-    std::cout << "before\n";
-    for (int i = 0; i < tmp_inst_vec.size(); i++)
-    {
-        std::cout << "\n[" << i << "]\n";
-        for (int j = 0; j < tmp_inst_vec[i].size(); j++)
-        {
-            std::cout << tmp_inst_vec[i][j];
-        }
-    }
+    // std::cout << "before\n";
+    // for (int i = 0; i < tmp_inst_vec.size(); i++)
+    // {
+    //     std::cout << "\n[" << i << "]\n";
+    //     for (int j = 0; j < tmp_inst_vec[i].size(); j++)
+    //     {
+    //         std::cout << tmp_inst_vec[i][j];
+    //     }
+    // }
 
     // 处理其中的goto指令【补充off + "\n"】
     for (int i = 0; i < func.InstVec.size(); i++)
@@ -557,7 +564,7 @@ void backend::Generator::gen_func(ir::Function &func)
                     rv_off += tmp_inst_vec[j].size();
                 }
                 std::cout << "rv_off: " << rv_off * 4 << "\n";
-                std::cout <<tmp_inst_vec[i].back()<<rv_off * 4 << "\n";
+                std::cout << tmp_inst_vec[i].back() << rv_off * 4 << "\n";
                 tmp_inst_vec[i].back() += std::to_string(rv_off * 4);
                 tmp_inst_vec[i].back() += "\n";
             }
@@ -570,7 +577,7 @@ void backend::Generator::gen_func(ir::Function &func)
                     rv_off += tmp_inst_vec[j].size();
                 }
                 std::cout << "rv_off: " << rv_off * 4 << "\n";
-                std::cout <<tmp_inst_vec[i].back()<<rv_off * 4 << "\n";
+                std::cout << tmp_inst_vec[i].back() << rv_off * 4 << "\n";
                 tmp_inst_vec[i].back() += std::to_string(-rv_off * 4);
                 tmp_inst_vec[i].back() += "\n";
             }
@@ -608,7 +615,7 @@ void backend::Generator::gen_func(ir::Function &func)
         for (int j = 0; j < tmp_inst_vec[i].size(); j++)
         {
             fout << tmp_inst_vec[i][j];
-            std::cout << tmp_inst_vec[i][j];
+            // std::cout << tmp_inst_vec[i][j];
         }
     }
     // fout << tmp_inst;
@@ -931,7 +938,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
         rv::rvREG rs1 = getRs1(inst.op1); // 数组名
         rv::rvREG rs2 = getRs1(inst.op2); // 下标
         rv::rvREG rd = getRd(inst.des);   // 待存入的数
-
+        LOAD_RD;
         int offset = stackmap.find_operand(inst.op1);
         if (offset == -1)
         { /* 未在局部变量中找到*/
@@ -981,7 +988,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
                 tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(offset) + "\n");
                 // 基址设为sp+偏移量，存在rs2中
                 tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADD) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + ",sp\n");
-                // load
+                // save
                 tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
             }
         }
