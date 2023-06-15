@@ -520,11 +520,13 @@ void backend::Generator::gen_func(ir::Function &func)
     }
     std::cout << "Param Bingo!\n";
     // 分析指令，暂存
-    std::string tmp_inst = "";
+    std::vector<std::string, int> tmp_inst_vec;
     for (int i = 0; i < func.InstVec.size(); i++)
     {
+        std::string tmp_inst = "";
         bool is_global_func = (func.name == "globalFunc");
         gen_instr(*func.InstVec[i], tmp_inst, is_global_func);
+        tmp_inst_vec.push_back({tmp_inst, 1});
     }
     std::cout << "Inst Bingo!\n";
     // 保存返回地址,暂存
@@ -544,12 +546,15 @@ void backend::Generator::gen_func(ir::Function &func)
     fout << tmp_var;
     std::cout << tmp_var;
     // 4.处理指令【包含return等操作】
-    fout << tmp_inst;
-    std::cout << tmp_inst;
+    TODO;
+    // fout << tmp_inst;
+    // std::cout << tmp_inst;
 }
 
-void backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, bool is_global_func)
+int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, bool is_global_func)
 {
+    // 记录当前IR指令对应的汇编指令数量
+    int cnt = 0;
     switch (inst.op)
     {
     case ir::Operator::mul:
@@ -599,6 +604,7 @@ void backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, 
         op_inst->rd = rd;
 
         tmp_out += ("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "," + rv::toString(op_inst->rs2) + "\n");
+        cnt++;
         // save back rd
         SAVE_BACK_RD;
     }
@@ -618,6 +624,7 @@ void backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, 
         op_inst->rd = rd;
 
         tmp_out += ("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "," + rv::toString(op_inst->rs2) + "\n");
+        cnt++;
         SAVE_BACK_RD;
     }
     break;
