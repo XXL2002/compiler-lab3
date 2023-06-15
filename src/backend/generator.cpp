@@ -4,83 +4,83 @@
 // #include "generator.h"
 
 #define TODO assert(0 && "todo")
-#define LOAD_RS1                                                                                                                      \
-    int offset1 = stackmap.find_operand(inst.op1);                                                                                     \
-    if (offset1 == -1)                                                                                                                 \
-    { /* 未在局部变量中找到*/                                                                                                \
-        if (find_operand_global(inst.op1))                                                                                            \
-        { /* 在全局变量中找到，直接用标签 */                                                                            \
-            tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs1) + "," + inst.op1.name + "\n");               \
-            tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rs1) + ",0(" + rv::toString(rs1) + ")\n");        \
-        }                                                                                                                             \
-        else                                                                                                                          \
-        { /* 在全局变量中未找到，报错 */                                                                                  \
-            assert(0 && "Can Not Find The Operand1");                                                                                 \
-        }                                                                                                                             \
-    }                                                                                                                                 \
-    else                                                                                                                              \
-    { /* 已找到 */                                                                                                                 \
-        tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rs1) + "," + std::to_string(offset1) + "(sp)" + "\n"); \
-    }\
+#define LOAD_RS1                                                                                                                             \
+    int offset1 = stackmap.find_operand(inst.op1);                                                                                           \
+    if (offset1 == -1)                                                                                                                       \
+    { /* 未在局部变量中找到*/                                                                                                       \
+        if (find_operand_global(inst.op1))                                                                                                   \
+        { /* 在全局变量中找到，直接用标签 */                                                                                   \
+            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs1) + "," + inst.op1.name + "\n");                \
+            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rs1) + ",0(" + rv::toString(rs1) + ")\n");         \
+        }                                                                                                                                    \
+        else                                                                                                                                 \
+        { /* 在全局变量中未找到，报错 */                                                                                         \
+            assert(0 && "Can Not Find The Operand1");                                                                                        \
+        }                                                                                                                                    \
+    }                                                                                                                                        \
+    else                                                                                                                                     \
+    { /* 已找到 */                                                                                                                        \
+        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rs1) + "," + std::to_string(offset1) + "(sp)" + "\n"); \
+    }                                                                                                                                        \
     // std::cout << "--\n"<< tmp_out << "--\n";
-#define LOAD_RS2                                                                                                                      \
-    int offset2 = stackmap.find_operand(inst.op2);                                                                                     \
-    if (offset2 == -1)                                                                                                                 \
-    { /* 未在局部变量中找到*/                                                                                                \
-        if (find_operand_global(inst.op2))                                                                                            \
-        { /* 在全局变量中找到，直接用标签 */                                                                            \
-            tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs2) + "," + inst.op2.name + "\n");               \
-            tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rs2) + "," + "0(" + rv::toString(rs2) + ")\n");   \
-        }                                                                                                                             \
-        else                                                                                                                          \
-        { /* 在全局变量中未找到，报错 */                                                                                  \
-            assert(0 && "Can Not Find The Operand2");                                                                                 \
-        }                                                                                                                             \
-    }                                                                                                                                 \
-    else                                                                                                                              \
-    { /* 已找到 */                                                                                                                 \
-        tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rs2) + "," + std::to_string(offset2) + "(sp)" + "\n"); \
+#define LOAD_RS2                                                                                                                             \
+    int offset2 = stackmap.find_operand(inst.op2);                                                                                           \
+    if (offset2 == -1)                                                                                                                       \
+    { /* 未在局部变量中找到*/                                                                                                       \
+        if (find_operand_global(inst.op2))                                                                                                   \
+        { /* 在全局变量中找到，直接用标签 */                                                                                   \
+            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs2) + "," + inst.op2.name + "\n");                \
+            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rs2) + "," + "0(" + rv::toString(rs2) + ")\n");    \
+        }                                                                                                                                    \
+        else                                                                                                                                 \
+        { /* 在全局变量中未找到，报错 */                                                                                         \
+            assert(0 && "Can Not Find The Operand2");                                                                                        \
+        }                                                                                                                                    \
+    }                                                                                                                                        \
+    else                                                                                                                                     \
+    { /* 已找到 */                                                                                                                        \
+        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rs2) + "," + std::to_string(offset2) + "(sp)" + "\n"); \
     }
-#define LOAD_RD                                                                                                                      \
-    int offsetd = stackmap.find_operand(inst.des);                                                                                    \
-    if (offsetd == -1)                                                                                                                \
-    { /* 未在局部变量中找到*/                                                                                               \
-        if (find_operand_global(inst.des))                                                                                           \
-        { /* 在全局变量中找到，直接用标签 */                                                                           \
-            tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rd) + "," + inst.des.name + "\n");               \
-            tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + "0(" + rv::toString(rd) + ")\n");    \
-        }                                                                                                                            \
-        else                                                                                                                         \
-        { /* 在全局变量中未找到，报错 */                                                                                 \
-            assert(0 && "Can Not Find The Operand DES");                                                                             \
-        }                                                                                                                            \
-    }                                                                                                                                \
-    else                                                                                                                             \
-    { /* 已找到 */                                                                                                                \
-        tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + std::to_string(offsetd) + "(sp)" + "\n"); \
+#define LOAD_RD                                                                                                                             \
+    int offsetd = stackmap.find_operand(inst.des);                                                                                          \
+    if (offsetd == -1)                                                                                                                      \
+    { /* 未在局部变量中找到*/                                                                                                      \
+        if (find_operand_global(inst.des))                                                                                                  \
+        { /* 在全局变量中找到，直接用标签 */                                                                                  \
+            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rd) + "," + inst.des.name + "\n");                \
+            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + "0(" + rv::toString(rd) + ")\n");     \
+        }                                                                                                                                   \
+        else                                                                                                                                \
+        { /* 在全局变量中未找到，报错 */                                                                                        \
+            assert(0 && "Can Not Find The Operand DES");                                                                                    \
+        }                                                                                                                                   \
+    }                                                                                                                                       \
+    else                                                                                                                                    \
+    { /* 已找到 */                                                                                                                       \
+        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + std::to_string(offsetd) + "(sp)" + "\n"); \
     }
 #define LOAD_RS1_RS2 \
     LOAD_RS1;        \
     LOAD_RS2;
 
-#define SAVE_BACK_RD                                                                                                                 \
-    int offset = stackmap.find_operand(inst.des);                                                                                    \
-    if (offset == -1)                                                                                                                \
-    { /* 未在局部变量中找到*/                                                                                               \
-        if (find_operand_global(inst.des))                                                                                           \
-        { /* 在全局变量中找到，直接用标签 */                                                                           \
-            tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs1) + "," + inst.op1.name + "\n");              \
-            tmp_out += ("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs1) + ")\n");        \
-        }                                                                                                                            \
-        else                                                                                                                         \
-        { /* 在全局变量中未找到，在局部变量中为其分配空间 */                                                   \
-            offset = stackmap.add_operand(inst.des);                                                                                 \
-            tmp_out += ("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(sp)\n");  \
-        }                                                                                                                            \
-    }                                                                                                                                \
-    else                                                                                                                             \
-    { /* 已找到 */                                                                                                                \
-        tmp_out += ("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(sp)" + "\n"); \
+#define SAVE_BACK_RD                                                                                                                       \
+    int offset = stackmap.find_operand(inst.des);                                                                                          \
+    if (offset == -1)                                                                                                                      \
+    { /* 未在局部变量中找到*/                                                                                                     \
+        if (find_operand_global(inst.des))                                                                                                 \
+        { /* 在全局变量中找到，直接用标签 */                                                                                 \
+            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs1) + "," + inst.op1.name + "\n");              \
+            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs1) + ")\n");        \
+        }                                                                                                                                  \
+        else                                                                                                                               \
+        { /* 在全局变量中未找到，在局部变量中为其分配空间 */                                                         \
+            offset = stackmap.add_operand(inst.des);                                                                                       \
+            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(sp)\n");  \
+        }                                                                                                                                  \
+    }                                                                                                                                      \
+    else                                                                                                                                   \
+    { /* 已找到 */                                                                                                                      \
+        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(sp)" + "\n"); \
     }
 
 backend::Generator::Generator(ir::Program &p, std::ofstream &f) : program(p), fout(f)
@@ -454,12 +454,13 @@ void backend::Generator::gen()
     std::cout << "\t.option nopic\n";
     // .data
     fout << "\t.data\n";
-    std::cout<< "\t.data\n";
+    std::cout << "\t.data\n";
     // 添加全局变量 变量.word 0 数组.space 大小
     for (int i = 0; i < program.globalVal.size(); i++)
     {
         std::string varname = program.globalVal[i].val.name;
-        if (program.globalVal[i].val.type==ir::Type::Int){
+        if (program.globalVal[i].val.type == ir::Type::Int)
+        {
             // 变量
             fout << "\t.global\t" << varname << "\n";
             std::cout << "\t.global\t" << varname << "\n";
@@ -473,28 +474,30 @@ void backend::Generator::gen()
             std::cout << varname << ":\n";
             fout << "\t.word\t0\n";
             std::cout << "\t.word\t0\n";
-        }else{
+        }
+        else
+        {
             assert(program.globalVal[i].val.type == ir::Type::IntPtr);
             // 数组
             fout << "\t.global\t" << varname << "\n";
             std::cout << "\t.global\t" << varname << "\n";
             fout << "\t.type\t" << varname << ",@object\n";
             std::cout << "\t.type\t" << varname << ",@object\n";
-            fout << "\t.size\t" << varname << ","<< std::to_string(program.globalVal[i].maxlen*4) <<"\n";
-            std::cout << "\t.size\t" << varname << ","<< std::to_string(program.globalVal[i].maxlen*4) <<"\n";
+            fout << "\t.size\t" << varname << "," << std::to_string(program.globalVal[i].maxlen * 4) << "\n";
+            std::cout << "\t.size\t" << varname << "," << std::to_string(program.globalVal[i].maxlen * 4) << "\n";
             fout << "\t.align\t4\n";
             std::cout << "\t.align\t4\n";
             fout << varname << ":\n";
             std::cout << varname << ":\n";
-            fout << "\t.space\t"<< std::to_string(program.globalVal[i].maxlen*4) <<"\n";
-            std::cout << "\t.space\t"<< std::to_string(program.globalVal[i].maxlen*4) <<"\n";
+            fout << "\t.space\t" << std::to_string(program.globalVal[i].maxlen * 4) << "\n";
+            std::cout << "\t.space\t" << std::to_string(program.globalVal[i].maxlen * 4) << "\n";
         }
     }
     // .text
     fout << "\t.text\n";
     std::cout << "\t.text\n";
     // 添加函数
-    for (int i = 0; i < program.functions.size();i++)
+    for (int i = 0; i < program.functions.size(); i++)
     {
         fout << "\t.global\t" << program.functions[i].name << "\n";
         std::cout << "\t.global\t" << program.functions[i].name << "\n";
@@ -520,13 +523,37 @@ void backend::Generator::gen_func(ir::Function &func)
     }
     std::cout << "Param Bingo!\n";
     // 分析指令，暂存
-    std::vector<std::string, int> tmp_inst_vec;
+    std::vector<std::vector<std::string>> tmp_inst_vec;
     for (int i = 0; i < func.InstVec.size(); i++)
     {
-        std::string tmp_inst = "";
+        std::vector<std::string> tmp_inst;
         bool is_global_func = (func.name == "globalFunc");
         gen_instr(*func.InstVec[i], tmp_inst, is_global_func);
-        tmp_inst_vec.push_back({tmp_inst, 1});
+        tmp_inst_vec[i] = tmp_inst;
+    }
+    // 处理其中的goto指令【补充off + "\n"】
+    for (int i = 0; i < func.InstVec.size(); i++)
+    {
+        if (func.InstVec[i]->op == ir::Operator::_goto)
+        {
+            int ir_off = std::stoi(func.InstVec[i]->des.name);
+            if (ir_off>0)
+            {
+                // 正向跳转
+                int rv_off = 0;
+                for (int j = i + 1; j < i + ir_off;j++){
+                    rv_off += tmp_inst_vec[j].size();
+                }
+                tmp_inst_vec[i].back() += (rv_off*4 + "\n");
+            }else{
+                // 反向跳转
+                int rv_off = tmp_inst_vec[i].size()-1;
+                for (int j = i - 1; j >= i - ir_off;j--){
+                    rv_off += tmp_inst_vec[j].size();
+                }
+                tmp_inst_vec[i].back() += (rv_off*4 + "\n");
+            }
+        }
     }
     std::cout << "Inst Bingo!\n";
     // 保存返回地址,暂存
@@ -546,12 +573,17 @@ void backend::Generator::gen_func(ir::Function &func)
     fout << tmp_var;
     std::cout << tmp_var;
     // 4.处理指令【包含return等操作】
-    TODO;
+    for (int i = 0; i < tmp_inst_vec.size();i++){
+        for (int j = 0; j < tmp_inst_vec[i].size();j++){
+            fout << tmp_inst_vec[i][j];
+            std::cout << tmp_inst_vec[i][j];
+        }
+    }
     // fout << tmp_inst;
     // std::cout << tmp_inst;
 }
 
-int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, bool is_global_func)
+int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string> &tmp_out, bool is_global_func)
 {
     // 记录当前IR指令对应的汇编指令数量
     int cnt = 0;
@@ -603,7 +635,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, b
         op_inst->rs2 = rs2;
         op_inst->rd = rd;
 
-        tmp_out += ("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "," + rv::toString(op_inst->rs2) + "\n");
+        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "," + rv::toString(op_inst->rs2) + "\n");
         cnt++;
         // save back rd
         SAVE_BACK_RD;
@@ -623,7 +655,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, b
         op_inst->rs2 = rs1;
         op_inst->rd = rd;
 
-        tmp_out += ("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "," + rv::toString(op_inst->rs2) + "\n");
+        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "," + rv::toString(op_inst->rs2) + "\n");
         cnt++;
         SAVE_BACK_RD;
     }
@@ -643,14 +675,14 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, b
         op_inst->rs2 = rs1;
         op_inst->rd = rd;
 
-        tmp_out += ("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "," + rv::toString(op_inst->rs2) + "\n");
+        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "," + rv::toString(op_inst->rs2) + "\n");
 
         // NOT
         op_inst->op = rv::rvOPCODE::NOT;
         op_inst->rs1 = rd;
         op_inst->rd = rd;
 
-        tmp_out += ("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
+        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
         SAVE_BACK_RD;
     }
     break;
@@ -669,14 +701,14 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, b
         op_inst->rs2 = rs2;
         op_inst->rd = rd;
 
-        tmp_out += ("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "," + rv::toString(op_inst->rs2) + "\n");
+        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "," + rv::toString(op_inst->rs2) + "\n");
 
         // NOT
         op_inst->op = rv::rvOPCODE::NOT;
         op_inst->rs1 = rd;
         op_inst->rd = rd;
 
-        tmp_out += ("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
+        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
         SAVE_BACK_RD;
     }
     break;
@@ -695,14 +727,14 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, b
         op_inst->rs2 = rs2;
         op_inst->rd = rd;
 
-        tmp_out += ("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "," + rv::toString(op_inst->rs2) + "\n");
+        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "," + rv::toString(op_inst->rs2) + "\n");
 
         // SNEZ
         op_inst->op = rv::rvOPCODE::SNEZ;
         op_inst->rs2 = rd;
         op_inst->rd = rd;
 
-        tmp_out += ("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs2) + "\n");
+        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs2) + "\n");
         SAVE_BACK_RD;
         // std::cout << tmp_out;
     }
@@ -722,14 +754,14 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, b
         op_inst->rs2 = rs2;
         op_inst->rd = rd;
 
-        tmp_out += ("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "," + rv::toString(op_inst->rs2) + "\n");
+        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "," + rv::toString(op_inst->rs2) + "\n");
 
         // SEQZ
         op_inst->op = rv::rvOPCODE::SEQZ;
         op_inst->rs2 = rd;
         op_inst->rd = rd;
 
-        tmp_out += ("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs2) + "\n");
+        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs2) + "\n");
         SAVE_BACK_RD;
     }
     break;
@@ -747,7 +779,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, b
         op_inst->rs1 = rd;
         op_inst->rd = rd;
 
-        tmp_out += ("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
+        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
 
         SAVE_BACK_RD;
     }
@@ -759,7 +791,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, b
         // NOT
         op_inst->op = rv::rvOPCODE::NOP;
 
-        tmp_out += ("\t" + rv::toString(op_inst->op) + "\n");
+        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\n");
     }
     break;
 
@@ -779,7 +811,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, b
             op_inst->rs1 = rs1;
             op_inst->rd = rd;
 
-            tmp_out += ("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + inst.op1.name + "\n");
+            tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + inst.op1.name + "\n");
         }
         else
         {
@@ -789,7 +821,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, b
             op_inst->rs1 = rs1;
             op_inst->rd = rd;
 
-            tmp_out += ("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
+            tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
         }
         SAVE_BACK_RD;
         // std::cout << "\n" <<tmp_out<<"\n";
@@ -808,11 +840,11 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, b
             if (find_operand_global(inst.op1))
             { /* 在全局变量中找到，直接用标签   偏移量为组内偏移量*/
                 // 加载基址进s1
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs1) + "," + inst.op1.name + "\n");
+                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs1) + "," + inst.op1.name + "\n");
                 if (inst.op2.type == ir::Type::IntLiteral)
                 {
                     // 组内偏移量为立即数【*4】，直接load     基址为标签地址
-                    tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + std::to_string(std::stoi(inst.op2.name) * 4) + "(" + rv::toString(rs1) + ")\n");
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + std::to_string(std::stoi(inst.op2.name) * 4) + "(" + rv::toString(rs1) + ")\n");
                     SAVE_BACK_RD;
                 }
                 else
@@ -820,11 +852,11 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, b
                     // 组内偏移量为变量     基址为标签地址+偏移量
                     LOAD_RS2;
                     // 组内偏移量 = 下标*4【左移2位】
-                    tmp_out += ("\t" + rv::toString(rv::rvOPCODE::SLLI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(2) + "\n");
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SLLI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(2) + "\n");
                     // 基址设为标签地址+偏移量，存在rs2中
-                    tmp_out += ("\t" + rv::toString(rv::rvOPCODE::ADD) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + rv::toString(rs1) + "\n");
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADD) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + rv::toString(rs1) + "\n");
                     // load
-                    tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
                     SAVE_BACK_RD;
                 }
             }
@@ -841,7 +873,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, b
             {
                 // 组内偏移量为立即数[常量+常量]    基址为sp
                 offset += std::stoi(inst.op2.name) * 4;
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(sp)\n");
+                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(sp)\n");
                 SAVE_BACK_RD;
             }
             else
@@ -849,13 +881,13 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, b
                 // 组内偏移量为变量[常量+变量]      基址为sp+偏移量
                 LOAD_RS2;
                 // 组内偏移量 = 下标*4【左移2位】
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::SLLI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(2) + "\n");
+                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SLLI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(2) + "\n");
                 // 偏移量相加
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(offset) + "\n");
+                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(offset) + "\n");
                 // 基址设为sp+偏移量，存在rs2中
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::ADD) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + ",sp\n");
+                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADD) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + ",sp\n");
                 // load
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
+                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
                 SAVE_BACK_RD;
             }
         }
@@ -874,22 +906,22 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, b
             if (find_operand_global(inst.op1))
             { /* 在全局变量中找到，直接用标签   偏移量为组内偏移量*/
                 // 加载基址进s1
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs1) + "," + inst.op1.name + "\n");
+                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs1) + "," + inst.op1.name + "\n");
                 if (inst.op2.type == ir::Type::IntLiteral)
                 {
                     // 组内偏移量为立即数【*4】，直接load     基址为标签地址
-                    tmp_out += ("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + "," + std::to_string(std::stoi(inst.op2.name) * 4) + "(" + rv::toString(rs1) + ")\n");
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + "," + std::to_string(std::stoi(inst.op2.name) * 4) + "(" + rv::toString(rs1) + ")\n");
                 }
                 else
                 {
                     // 组内偏移量为变量     基址为标签地址+偏移量
                     LOAD_RS2;
                     // 组内偏移量 = 下标*4【左移2位】
-                    tmp_out += ("\t" + rv::toString(rv::rvOPCODE::SLLI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(2) + "\n");
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SLLI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(2) + "\n");
                     // 基址设为标签地址+偏移量，存在rs2中
-                    tmp_out += ("\t" + rv::toString(rv::rvOPCODE::ADD) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + rv::toString(rs1) + "\n");
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADD) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + rv::toString(rs1) + "\n");
                     // save
-                    tmp_out += ("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
                 }
             }
             else
@@ -905,20 +937,20 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, b
             {
                 // 组内偏移量为立即数[常量+常量]    基址为sp
                 offset += std::stoi(inst.op2.name) * 4;
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(sp)\n");
+                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(sp)\n");
             }
             else
             {
                 // 组内偏移量为变量[常量+变量]      基址为sp+偏移量
                 LOAD_RS2;
                 // 组内偏移量 = 下标*4【左移2位】
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::SLLI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(2) + "\n");
+                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SLLI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(2) + "\n");
                 // 偏移量相加
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(offset) + "\n");
+                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(offset) + "\n");
                 // 基址设为sp+偏移量，存在rs2中
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::ADD) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + ",sp\n");
+                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADD) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + ",sp\n");
                 // load
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
+                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
             }
         }
     }
@@ -940,20 +972,24 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, b
         rv::rvREG rd = getRd(inst.des);   // 偏移量
         // LOAD_RS1;
         // LOAD_RD;
-        // 获取偏移量【并*4】   
+        // 获取偏移量【并*4】
         // 偏移量只可能为常量[×4]
         assert(inst.des.type != ir::Type::Int);
-        std::string off = std::to_string(std::stoi(inst.des.name) * 4);
+        // std::string off = std::to_string(std::stoi(inst.des.name) * 4);
         if (inst.op1.type == ir::Type::null)
         {
             // 无条件跳转   j
-            tmp_out += ("\t" + rv::toString(rv::rvOPCODE::J) + "\t" + off + "\n");
+            // tmp_out.push_back ("\t" + rv::toString(rv::rvOPCODE::J) + "\t" + off + "\n");
+            // off + "\n"待gen_func中补全
+            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::J) + "\t");
         }
         else
         {
             // 有条件跳转   bnez
             LOAD_RS1;
-            tmp_out += ("\t" + rv::toString(rv::rvOPCODE::BNEZ) + "\t" + rv::toString(rs1) + "," + off + "\n");
+            // tmp_out.push_back ("\t" + rv::toString(rv::rvOPCODE::BNEZ) + "\t" + rv::toString(rs1) + "," + off + "\n");
+            // off + "\n"待gen_func中补全
+            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::BNEZ) + "\t" + rv::toString(rs1) + ",");
         }
         // std::cout << tmp_out;
     }
@@ -972,27 +1008,27 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, b
                 if (find_operand_global(callinst->argumentList[i]))
                 { /* 在全局变量中找到，直接用标签 */
                     rv::rvREG tmp = getRd(inst.op1);
-                    tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(tmp) + "," + callinst->argumentList[i].name + "\n");
-                    tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a" + std::to_string(i) + "," + "0(" + rv::toString(tmp) + ")\n");
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(tmp) + "," + callinst->argumentList[i].name + "\n");
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a" + std::to_string(i) + "," + "0(" + rv::toString(tmp) + ")\n");
                 }
                 else
                 { /* 在全局变量中未找到 */
                     // 可能是常量
-                    if (callinst->argumentList[i].type!=ir::Type::IntLiteral)
+                    if (callinst->argumentList[i].type != ir::Type::IntLiteral)
                     {
                         assert(0 && "Can Not Find The Param");
                     }
-                    tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LI) + "\t" + "a" + std::to_string(i) + "," + callinst->argumentList[i].name + "\n");
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LI) + "\t" + "a" + std::to_string(i) + "," + callinst->argumentList[i].name + "\n");
                 }
             }
             else
             { /* 已找到 */
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a" + std::to_string(i) + "," + std::to_string(offset) + "(sp)" + "\n");
+                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a" + std::to_string(i) + "," + std::to_string(offset) + "(sp)" + "\n");
             }
         }
 
         // call     inst.op1.name为函数名，即标签   ra为返回地址【pc+8,因为call为伪指令，实际翻译为两条汇编】
-        tmp_out += ("\t" + rv::toString(rv::rvOPCODE::CALL) + "\t" + "ra" + "," + inst.op1.name + "\n");
+        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::CALL) + "\t" + "ra" + "," + inst.op1.name + "\n");
 
         // 最后取返回值     返回值在寄存器a0中
         int offset = stackmap.find_operand(inst.des);
@@ -1000,18 +1036,18 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, b
         { /* 未在局部变量中找到*/
             if (find_operand_global(inst.des))
             { /* 在全局变量中找到，直接用标签 */
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + "t0" + "," + inst.op1.name + "\n");
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a0" + ",0(" + "t0" + ")\n");
+                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + "t0" + "," + inst.op1.name + "\n");
+                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a0" + ",0(" + "t0" + ")\n");
             }
             else
             { /* 在全局变量中未找到，在局部变量中为其分配空间 */
                 offset = stackmap.add_operand(inst.des);
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a0" + "," + std::to_string(offset) + "(sp)\n");
+                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a0" + "," + std::to_string(offset) + "(sp)\n");
             }
         }
         else
         { /* 已找到 */
-            tmp_out += ("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a0" + "," + std::to_string(offset) + "(sp)" + "\n");
+            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a0" + "," + std::to_string(offset) + "(sp)" + "\n");
         }
     }
     break;
@@ -1025,27 +1061,27 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, b
         { /* 未在局部变量中找到*/
             if (find_operand_global(inst.op1))
             { /* 在全局变量中找到，直接用标签 */
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs1) + "," + inst.op1.name + "\n");
-                tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a0" + ",0(" + rv::toString(rs1) + ")\n");
+                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs1) + "," + inst.op1.name + "\n");
+                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a0" + ",0(" + rv::toString(rs1) + ")\n");
             }
             else
             { /* 在全局变量中未找到 */
-                if (inst.op1.type!=ir::Type::null)
+                if (inst.op1.type != ir::Type::null)
                     assert(0 && "Can Not Find The Return OP");
             }
         }
         else
         { /* 已找到 */
-            tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a0" + "," + std::to_string(offset) + "(sp)" + "\n");
+            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a0" + "," + std::to_string(offset) + "(sp)" + "\n");
         }
 
         // jr ra
         // 从栈中取返回地址放于ra
-        tmp_out += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "ra" + "," + std::to_string(stackmap.cur_off) + "(sp)" + "\n");
+        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "ra" + "," + std::to_string(stackmap.cur_off) + "(sp)" + "\n");
         // 释放占空间【包括额外保存的返回地址】
-        tmp_out += ("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + "sp" + "," + "sp" + "," + std::to_string(stackmap.cur_off + 4) + "\n");
+        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + "sp" + "," + "sp" + "," + std::to_string(stackmap.cur_off + 4) + "\n");
         // 跳转返回
-        tmp_out += ("\t" + rv::toString(rv::rvOPCODE::JR) + "\t" + "ra" + "\n");
+        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::JR) + "\t" + "ra" + "\n");
         // std::cout << tmp_out;
     }
     break;

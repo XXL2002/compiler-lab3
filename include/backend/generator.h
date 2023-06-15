@@ -50,7 +50,7 @@ struct Generator {
     // generate wrapper function
     void gen();
     void gen_func(ir::Function&);
-    int gen_instr(ir::Instruction&, std::string&, bool);
+    int gen_instr(ir::Instruction&, std::vector<std::string>&, bool);
 
     /**
      * @brief find the label name of a global ir::Operand
