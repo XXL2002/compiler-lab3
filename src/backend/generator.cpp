@@ -286,6 +286,8 @@ std::string rv::toString(rvOPCODE r)
         return "BEQZ";
     case rvOPCODE::CALL:
         return "CALL";
+    case rvOPCODE::NOT:
+        return "NOT";
     default:
         assert(0 && "No Such Kind Of rvOPCODE");
         break;
@@ -441,7 +443,7 @@ int backend::stackVarMap::add_operand(ir::Operand op, uint32_t size = 4)
     int offset = cur_off;
     _table[op.name] = offset;
     cur_off += size;
-    std::cout << "\t\tadd\t" << op.name << "\toffset:" << offset << "\n";
+    std::cout << "\t\t\tadd\t" << op.name << "\toffset:" << offset << "\n";
     return offset;
 }
 
@@ -457,7 +459,7 @@ void backend::Generator::gen()
     for (int i = 0; i < program.globalVal.size(); i++)
     {
         std::string varname = program.globalVal[i].val.name;
-        if (program.globalVal[i].val.type==ir::Type::IntLiteral){
+        if (program.globalVal[i].val.type==ir::Type::Int){
             // 变量
             fout << "\t.global\t" << varname << "\n";
             std::cout << "\t.global\t" << varname << "\n";
@@ -794,7 +796,7 @@ void backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, 
         rv::rvREG rd = getRd(inst.des);
 
         int offset = stackmap.find_operand(inst.op1);
-        if (offset == 0)
+        if (offset == -1)
         { /* 未在局部变量中找到*/
             if (find_operand_global(inst.op1))
             { /* 在全局变量中找到，直接用标签   偏移量为组内偏移量*/
@@ -860,7 +862,7 @@ void backend::Generator::gen_instr(ir::Instruction &inst, std::string &tmp_out, 
         rv::rvREG rd = getRd(inst.des);   // 待存入的数
 
         int offset = stackmap.find_operand(inst.op1);
-        if (offset == 0)
+        if (offset == -1)
         { /* 未在局部变量中找到*/
             if (find_operand_global(inst.op1))
             { /* 在全局变量中找到，直接用标签   偏移量为组内偏移量*/
