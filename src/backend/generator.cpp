@@ -423,7 +423,7 @@ int backend::stackVarMap::find_operand(ir::Operand op)
 /// @return the label name
 bool backend::Generator::find_operand_global(ir::Operand op)
 {
-    std::cout << "\t\tfindGlobal\t" << op.name << "\n";
+    // std::cout << "\t\tfindGlobal\t" << op.name << "\n";
     for (auto it = program.globalVal.begin(); it != program.globalVal.end(); it++)
     {
         if (it->val.name == op.name)
@@ -523,36 +523,66 @@ void backend::Generator::gen_func(ir::Function &func)
     }
     std::cout << "Param Bingo!\n";
     // 分析指令，暂存
-    std::vector<std::vector<std::string>> tmp_inst_vec;
+    auto tmp_inst_vec = *new std::vector<std::vector<std::string> >;
     for (int i = 0; i < func.InstVec.size(); i++)
     {
-        std::vector<std::string> tmp_inst;
+        auto tmp_inst = *new std::vector<std::string>;
         bool is_global_func = (func.name == "globalFunc");
         gen_instr(*func.InstVec[i], tmp_inst, is_global_func);
-        tmp_inst_vec[i] = tmp_inst;
+        tmp_inst_vec.push_back(tmp_inst);
     }
+    std::cout << "before\n";
+    for (int i = 0; i < tmp_inst_vec.size(); i++)
+    {
+        std::cout << "\n[" << i << "]\n";
+        for (int j = 0; j < tmp_inst_vec[i].size(); j++)
+        {
+            std::cout << tmp_inst_vec[i][j];
+        }
+    }
+
     // 处理其中的goto指令【补充off + "\n"】
     for (int i = 0; i < func.InstVec.size(); i++)
     {
         if (func.InstVec[i]->op == ir::Operator::_goto)
         {
             int ir_off = std::stoi(func.InstVec[i]->des.name);
-            if (ir_off>0)
+            std::cout << "->[" << i << "]\tir_off:" << ir_off << "\n";
+            if (ir_off > 0)
             {
                 // 正向跳转
-                int rv_off = 0;
-                for (int j = i + 1; j < i + ir_off;j++){
+                int rv_off = 1;
+                for (int j = i + 1; j < i + ir_off; j++)
+                {
                     rv_off += tmp_inst_vec[j].size();
                 }
-                tmp_inst_vec[i].back() += (rv_off*4 + "\n");
-            }else{
-                // 反向跳转
-                int rv_off = tmp_inst_vec[i].size()-1;
-                for (int j = i - 1; j >= i - ir_off;j--){
-                    rv_off += tmp_inst_vec[j].size();
-                }
-                tmp_inst_vec[i].back() += (rv_off*4 + "\n");
+                std::cout << "rv_off: " << rv_off * 4 << "\n";
+                std::cout <<tmp_inst_vec[i].back()<<rv_off * 4 << "\n";
+                tmp_inst_vec[i].back() += std::to_string(rv_off * 4);
+                tmp_inst_vec[i].back() += "\n";
             }
+            else
+            {
+                // 反向跳转
+                int rv_off = tmp_inst_vec[i].size() - 1;
+                for (int j = i - 1; j >= i + ir_off; j--)
+                {
+                    rv_off += tmp_inst_vec[j].size();
+                }
+                std::cout << "rv_off: " << rv_off * 4 << "\n";
+                std::cout <<tmp_inst_vec[i].back()<<rv_off * 4 << "\n";
+                tmp_inst_vec[i].back() += std::to_string(-rv_off * 4);
+                tmp_inst_vec[i].back() += "\n";
+            }
+        }
+    }
+    std::cout << "after\n";
+    for (int i = 0; i < tmp_inst_vec.size(); i++)
+    {
+        std::cout << "\n[" << i << "]\n";
+        for (int j = 0; j < tmp_inst_vec[i].size(); j++)
+        {
+            std::cout << tmp_inst_vec[i][j];
         }
     }
     std::cout << "Inst Bingo!\n";
@@ -573,8 +603,10 @@ void backend::Generator::gen_func(ir::Function &func)
     fout << tmp_var;
     std::cout << tmp_var;
     // 4.处理指令【包含return等操作】
-    for (int i = 0; i < tmp_inst_vec.size();i++){
-        for (int j = 0; j < tmp_inst_vec[i].size();j++){
+    for (int i = 0; i < tmp_inst_vec.size(); i++)
+    {
+        for (int j = 0; j < tmp_inst_vec[i].size(); j++)
+        {
             fout << tmp_inst_vec[i][j];
             std::cout << tmp_inst_vec[i][j];
         }
@@ -1082,7 +1114,10 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
         tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + "sp" + "," + "sp" + "," + std::to_string(stackmap.cur_off + 4) + "\n");
         // 跳转返回
         tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::JR) + "\t" + "ra" + "\n");
-        // std::cout << tmp_out;
+        // std::cout << tmp_out.size() << "<---\n";
+        // for (int i = 0; i < tmp_out.size();i++){
+        //     std::cout << tmp_out[i];
+        // }
     }
     break;
 
