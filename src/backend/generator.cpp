@@ -11,6 +11,7 @@
         if (find_operand_global(inst.op1))                                                                                                   \
         { /* 在全局变量中找到，直接用标签 */                                                                                   \
             tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs1) + "," + inst.op1.name + "\n");                \
+            tmp_out.push_back("");                                                                                                           \
             tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rs1) + ",0(" + rv::toString(rs1) + ")\n");         \
         }                                                                                                                                    \
         else                                                                                                                                 \
@@ -30,6 +31,7 @@
         if (find_operand_global(inst.op2))                                                                                                   \
         { /* 在全局变量中找到，直接用标签 */                                                                                   \
             tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs2) + "," + inst.op2.name + "\n");                \
+            tmp_out.push_back("");                                                                                                           \
             tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rs2) + "," + "0(" + rv::toString(rs2) + ")\n");    \
         }                                                                                                                                    \
         else                                                                                                                                 \
@@ -48,6 +50,7 @@
         if (find_operand_global(inst.des))                                                                                                  \
         { /* 在全局变量中找到，直接用标签 */                                                                                  \
             tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rd) + "," + inst.des.name + "\n");                \
+            tmp_out.push_back("");                                                                                                          \
             tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + "0(" + rv::toString(rd) + ")\n");     \
         }                                                                                                                                   \
         else                                                                                                                                \
@@ -70,6 +73,7 @@
         if (find_operand_global(inst.des))                                                                                                 \
         { /* 在全局变量中找到，直接用标签 */                                                                                 \
             tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs1) + "," + inst.op1.name + "\n");              \
+            tmp_out.push_back("");                                                                                                         \
             tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs1) + ")\n");        \
         }                                                                                                                                  \
         else                                                                                                                               \
@@ -844,6 +848,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
             op_inst->rd = rd;
 
             tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + inst.op1.name + "\n");
+            tmp_out.push_back("");
         }
         else
         {
@@ -873,6 +878,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
             { /* 在全局变量中找到，直接用标签   偏移量为组内偏移量*/
                 // 加载基址进s1
                 tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs1) + "," + inst.op1.name + "\n");
+                tmp_out.push_back("");
                 if (inst.op2.type == ir::Type::IntLiteral)
                 {
                     // 组内偏移量为立即数【*4】，直接load     基址为标签地址
@@ -939,6 +945,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
             { /* 在全局变量中找到，直接用标签   偏移量为组内偏移量*/
                 // 加载基址进s1
                 tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs1) + "," + inst.op1.name + "\n");
+                tmp_out.push_back("");
                 if (inst.op2.type == ir::Type::IntLiteral)
                 {
                     // 组内偏移量为立即数【*4】，直接load     基址为标签地址
@@ -1041,6 +1048,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
                 { /* 在全局变量中找到，直接用标签 */
                     rv::rvREG tmp = getRd(inst.op1);
                     tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(tmp) + "," + callinst->argumentList[i].name + "\n");
+                    tmp_out.push_back("");
                     tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a" + std::to_string(i) + "," + "0(" + rv::toString(tmp) + ")\n");
                 }
                 else
@@ -1051,6 +1059,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
                         assert(0 && "Can Not Find The Param");
                     }
                     tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LI) + "\t" + "a" + std::to_string(i) + "," + callinst->argumentList[i].name + "\n");
+                    tmp_out.push_back("");
                 }
             }
             else
@@ -1061,6 +1070,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
 
         // call     inst.op1.name为函数名，即标签   ra为返回地址【pc+8,因为call为伪指令，实际翻译为两条汇编】
         tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::CALL) + "\t" + "ra" + "," + inst.op1.name + "\n");
+        tmp_out.push_back("");
 
         // 最后取返回值     返回值在寄存器a0中
         int offset = stackmap.find_operand(inst.des);
@@ -1069,6 +1079,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
             if (find_operand_global(inst.des))
             { /* 在全局变量中找到，直接用标签 */
                 tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + "t0" + "," + inst.op1.name + "\n");
+                tmp_out.push_back("");
                 tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a0" + ",0(" + "t0" + ")\n");
             }
             else
@@ -1094,6 +1105,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
             if (find_operand_global(inst.op1))
             { /* 在全局变量中找到，直接用标签 */
                 tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs1) + "," + inst.op1.name + "\n");
+                tmp_out.push_back("");
                 tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a0" + ",0(" + rv::toString(rs1) + ")\n");
             }
             else
