@@ -1,4 +1,3 @@
-/*
 int ints[10000];
 int intt;
 int chas[10000];
@@ -183,4 +182,3 @@ int main()
     putint(ints[1]);
     return 0;
 }
-*/

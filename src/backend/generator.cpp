@@ -469,8 +469,8 @@ void backend::Generator::gen()
         if (program.globalVal[i].val.type == ir::Type::Int)
         {
             // 变量
-            fout << "\t.global\t" << varname << "\n";
-            std::cout << "\t.global\t" << varname << "\n";
+            fout << "\t.globl\t" << varname << "\n";
+            std::cout << "\t.globl\t" << varname << "\n";
             fout << "\t.type\t" << varname << ",@object\n";
             std::cout << "\t.type\t" << varname << ",@object\n";
             fout << "\t.size\t" << varname << ",4\n";
@@ -486,8 +486,8 @@ void backend::Generator::gen()
         {
             assert(program.globalVal[i].val.type == ir::Type::IntPtr);
             // 数组
-            fout << "\t.global\t" << varname << "\n";
-            std::cout << "\t.global\t" << varname << "\n";
+            fout << "\t.globl\t" << varname << "\n";
+            std::cout << "\t.globl\t" << varname << "\n";
             fout << "\t.type\t" << varname << ",@object\n";
             std::cout << "\t.type\t" << varname << ",@object\n";
             fout << "\t.size\t" << varname << "," << std::to_string(program.globalVal[i].maxlen * 4) << "\n";
@@ -506,8 +506,8 @@ void backend::Generator::gen()
     // 添加函数
     for (int i = 0; i < program.functions.size(); i++)
     {
-        fout << "\t.global\t" << program.functions[i].name << "\n";
-        std::cout << "\t.global\t" << program.functions[i].name << "\n";
+        fout << "\t.globl\t" << program.functions[i].name << "\n";
+        std::cout << "\t.globl\t" << program.functions[i].name << "\n";
         fout << "\t.type\t" << program.functions[i].name << ",@function\n";
         std::cout << "\t.type\t" << program.functions[i].name << ",@function\n";
         fout << program.functions[i].name << ":\n";
@@ -555,43 +555,45 @@ void backend::Generator::gen_func(ir::Function &func)
         {
             int ir_off = std::stoi(func.InstVec[i]->des.name);
             std::cout << "->[" << i << "]\tir_off:" << ir_off << "\n";
-            if (ir_off > 0)
-            {
-                // 正向跳转
-                int rv_off = 1;
-                for (int j = i + 1; j < i + ir_off; j++)
-                {
-                    rv_off += tmp_inst_vec[j].size();
-                }
-                std::cout << "rv_off: " << rv_off * 4 << "\n";
-                std::cout << tmp_inst_vec[i].back() << rv_off * 4 << "\n";
-                tmp_inst_vec[i].back() += std::to_string(rv_off * 4);
-                tmp_inst_vec[i].back() += "\n";
-            }
-            else
-            {
-                // 反向跳转
-                int rv_off = tmp_inst_vec[i].size() - 1;
-                for (int j = i - 1; j >= i + ir_off; j--)
-                {
-                    rv_off += tmp_inst_vec[j].size();
-                }
-                std::cout << "rv_off: " << rv_off * 4 << "\n";
-                std::cout << tmp_inst_vec[i].back() << rv_off * 4 << "\n";
-                tmp_inst_vec[i].back() += std::to_string(-rv_off * 4);
-                tmp_inst_vec[i].back() += "\n";
-            }
+            // if (ir_off > 0)
+            // {
+            //     // 正向跳转
+            //     int rv_off = 1;
+            //     for (int j = i + 1; j < i + ir_off; j++)
+            //     {
+            //         rv_off += tmp_inst_vec[j].size();
+            //     }
+            //     std::cout << "rv_off: " << rv_off * 4 << "\n";
+            //     std::cout << tmp_inst_vec[i].back() << rv_off * 4 << "\n";
+            //     tmp_inst_vec[i].back() += std::to_string(rv_off * 4);
+            //     tmp_inst_vec[i].back() += "\n";
+            // }
+            // else
+            // {
+            //     // 反向跳转
+            //     int rv_off = tmp_inst_vec[i].size() - 1;
+            //     for (int j = i - 1; j >= i + ir_off; j--)
+            //     {
+            //         rv_off += tmp_inst_vec[j].size();
+            //     }
+            //     std::cout << "rv_off: " << rv_off * 4 << "\n";
+            //     std::cout << tmp_inst_vec[i].back() << rv_off * 4 << "\n";
+            //     tmp_inst_vec[i].back() += std::to_string(-rv_off * 4);
+            //     tmp_inst_vec[i].back() += "\n";
+            // }
+            std::string tmp = func.name + "_" + std::to_string(i+ir_off) + "\n";
+            tmp_inst_vec[i].back() += tmp;
         }
     }
-    std::cout << "after\n";
-    for (int i = 0; i < tmp_inst_vec.size(); i++)
-    {
-        std::cout << "\n[" << i << "]\n";
-        for (int j = 0; j < tmp_inst_vec[i].size(); j++)
-        {
-            std::cout << tmp_inst_vec[i][j];
-        }
-    }
+    // std::cout << "after\n";
+    // for (int i = 0; i < tmp_inst_vec.size(); i++)
+    // {
+    //     std::cout << "\n[" << i << "]:\n";
+    //     for (int j = 0; j < tmp_inst_vec[i].size(); j++)
+    //     {
+    //         std::cout << tmp_inst_vec[i][j];
+    //     }
+    // }
     std::cout << "Inst Bingo!\n";
     // 保存返回地址,暂存
     std::string tmp_addr = "";
@@ -612,10 +614,12 @@ void backend::Generator::gen_func(ir::Function &func)
     // 4.处理指令【包含return等操作】
     for (int i = 0; i < tmp_inst_vec.size(); i++)
     {
+        fout << func.name << "_" << i << ":\n";
+        std::cout << func.name << "_" << i << ":\n";
         for (int j = 0; j < tmp_inst_vec[i].size(); j++)
         {
             fout << tmp_inst_vec[i][j];
-            // std::cout << tmp_inst_vec[i][j];
+            std::cout << tmp_inst_vec[i][j];
         }
     }
     // fout << tmp_inst;
@@ -716,12 +720,15 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
 
         tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "," + rv::toString(op_inst->rs2) + "\n");
 
-        // NOT
-        op_inst->op = rv::rvOPCODE::NOT;
+        // // NOT
+        // op_inst->op = rv::rvOPCODE::NOT;
+        // XORI
+        op_inst->op = rv::rvOPCODE::XORI;
         op_inst->rs1 = rd;
         op_inst->rd = rd;
 
-        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
+        // tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
+        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + ",1\n");
         SAVE_BACK_RD;
     }
     break;
@@ -742,12 +749,15 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
 
         tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "," + rv::toString(op_inst->rs2) + "\n");
 
-        // NOT
-        op_inst->op = rv::rvOPCODE::NOT;
+        // // NOT
+        // op_inst->op = rv::rvOPCODE::NOT;
+        // XORI
+        op_inst->op = rv::rvOPCODE::XORI;
         op_inst->rs1 = rd;
         op_inst->rd = rd;
 
-        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
+        // tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
+        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + ",1\n");
         SAVE_BACK_RD;
     }
     break;
@@ -768,8 +778,8 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
 
         tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "," + rv::toString(op_inst->rs2) + "\n");
 
-        // SNEZ
-        op_inst->op = rv::rvOPCODE::SNEZ;
+        // SEQZ
+        op_inst->op = rv::rvOPCODE::SEQZ;
         op_inst->rs2 = rd;
         op_inst->rd = rd;
 
@@ -795,8 +805,8 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
 
         tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "," + rv::toString(op_inst->rs2) + "\n");
 
-        // SEQZ
-        op_inst->op = rv::rvOPCODE::SEQZ;
+        // SNEZ
+        op_inst->op = rv::rvOPCODE::SNEZ;
         op_inst->rs2 = rd;
         op_inst->rd = rd;
 
@@ -813,12 +823,15 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
 
         rv::rv_inst *op_inst = new rv::rv_inst();
 
-        // SEQZ
-        op_inst->op = rv::rvOPCODE::SEQZ;
+        // // SEQZ
+        // op_inst->op = rv::rvOPCODE::SEQZ;
+        // XORI
+        op_inst->op = rv::rvOPCODE::XORI;
         op_inst->rs1 = rd;
         op_inst->rd = rd;
 
-        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
+        // tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
+        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + ",1\n");
 
         SAVE_BACK_RD;
     }
@@ -827,7 +840,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
     case ir::Operator::__unuse__:
     {
         rv::rv_inst *op_inst = new rv::rv_inst();
-        // NOT
+        // NOP
         op_inst->op = rv::rvOPCODE::NOP;
 
         tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\n");
