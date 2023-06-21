@@ -883,7 +883,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
     case ir::Operator::load:
     {
         rv::rvREG rs1 = getRs1(inst.op1);
-        rv::rvREG rs2 = getRs1(inst.op2);
+        rv::rvREG rs2 = getRs2(inst.op2);
         rv::rvREG rd = getRd(inst.des);
 
         int offset = stackmap.find_operand(inst.op1);
@@ -949,7 +949,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
     case ir::Operator::store:
     {
         rv::rvREG rs1 = getRs1(inst.op1); // 数组名
-        rv::rvREG rs2 = getRs1(inst.op2); // 下标
+        rv::rvREG rs2 = getRs2(inst.op2); // 下标
         rv::rvREG rd = getRd(inst.des);   // 待存入的数
         LOAD_RD;
         int offset = stackmap.find_operand(inst.op1);
