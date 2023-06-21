@@ -520,6 +520,8 @@ void backend::Generator::gen()
 
 void backend::Generator::gen_func(ir::Function &func)
 {
+    // 重置偏移量
+    stackmap.cur_off = 0;
     // ABI
     // 处理实参，暂存
     std::string tmp_var = "";
@@ -534,8 +536,8 @@ void backend::Generator::gen_func(ir::Function &func)
     for (int i = 0; i < func.InstVec.size(); i++)
     {
         auto tmp_inst = *new std::vector<std::string>;
-        bool is_global_func = (func.name == "globalFunc");
-        gen_instr(*func.InstVec[i], tmp_inst, is_global_func);
+        // bool is_global_func = (func.name == "globalFunc");
+        gen_instr(*func.InstVec[i], tmp_inst, func);
         tmp_inst_vec.push_back(tmp_inst);
     }
     // std::cout << "before\n";
@@ -626,7 +628,7 @@ void backend::Generator::gen_func(ir::Function &func)
     // std::cout << tmp_inst;
 }
 
-int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string> &tmp_out, bool is_global_func)
+int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string> &tmp_out, ir::Function &func)
 {
     // 记录当前IR指令对应的汇编指令数量
     int cnt = 0;
@@ -918,29 +920,68 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
             }
         }
         else
-        { /* 已找到,是局部变量  偏移量=数组偏移量[常量]+数组内偏移量*/
-            rv::rv_inst *op_inst = new rv::rv_inst();
-
-            if (inst.op2.type == ir::Type::IntLiteral)
-            {
-                // 组内偏移量为立即数[常量+常量]    基址为sp
-                offset += std::stoi(inst.op2.name) * 4;
-                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(sp)\n");
-                SAVE_BACK_RD;
+        {
+            // 判断是否是函数的参数【参数存放的是栈中的地址】
+            bool isParam = false;
+            for (int i = 0; i < func.ParameterList.size();i++){
+                if (inst.op1.name == func.ParameterList[i].name){
+                    isParam = true;
+                    break;
+                }
             }
-            else
-            {
-                // 组内偏移量为变量[常量+变量]      基址为sp+偏移量
-                LOAD_RS2;
-                // 组内偏移量 = 下标*4【左移2位】
-                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SLLI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(2) + "\n");
-                // 偏移量相加
-                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(offset) + "\n");
-                // 基址设为sp+偏移量，存在rs2中
-                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADD) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + ",sp\n");
-                // load
-                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
-                SAVE_BACK_RD;
+            if (!isParam){
+                /* 已找到,是局部变量  偏移量=数组偏移量[常量]+数组内偏移量*/
+                rv::rv_inst *op_inst = new rv::rv_inst();
+
+                if (inst.op2.type == ir::Type::IntLiteral)
+                {
+                    // 组内偏移量为立即数[常量+常量]    基址为sp
+                    offset += std::stoi(inst.op2.name) * 4;
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(sp)\n");
+                    SAVE_BACK_RD;
+                }
+                else
+                {
+                    // 组内偏移量为变量[常量+变量]      基址为sp+偏移量
+                    LOAD_RS2;
+                    // 组内偏移量 = 下标*4【左移2位】
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SLLI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(2) + "\n");
+                    // 偏移量相加
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(offset) + "\n");
+                    // 基址设为sp+偏移量，存在rs2中
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADD) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + ",sp\n");
+                    // load
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
+                    SAVE_BACK_RD;
+                }
+            }else{
+                // 已找到，是函数实参   
+                rv::rv_inst *op_inst = new rv::rv_inst();
+
+                if (inst.op2.type == ir::Type::IntLiteral)
+                {
+                    // 组内偏移量为立即数    基址为数组地址
+                    // load数组地址
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(sp)\n");
+                    // 重置偏移量为组内偏移量
+                    offset = std::stoi(inst.op2.name) * 4;
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(" + rv::toString(rd) + ")\n");
+                    SAVE_BACK_RD;
+                }
+                else
+                {
+                    // 组内偏移量为变量     基址为数组地址
+                    LOAD_RS2;
+                    // 组内偏移量 = 下标*4【左移2位】
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SLLI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(2) + "\n");
+                    // load数组地址
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(sp)\n");
+                    // 基址设为数组地址+组内偏移量，存在rs2中
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADD) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + rv::toString(rd) + "\n");
+                    // load
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
+                    SAVE_BACK_RD;
+                }
             }
         }
     }
@@ -982,27 +1023,64 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
             }
         }
         else
-        { /* 已找到,是局部变量  偏移量=数组偏移量[常量]+数组内偏移量*/
-            rv::rv_inst *op_inst = new rv::rv_inst();
-
-            if (inst.op2.type == ir::Type::IntLiteral)
-            {
-                // 组内偏移量为立即数[常量+常量]    基址为sp
-                offset += std::stoi(inst.op2.name) * 4;
-                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(sp)\n");
+        { 
+            // 判断是否是函数的参数【参数存放的是栈中的地址】
+            bool isParam = false;
+            for (int i = 0; i < func.ParameterList.size();i++){
+                if (inst.op1.name == func.ParameterList[i].name){
+                    isParam = true;
+                    break;
+                }
             }
-            else
-            {
-                // 组内偏移量为变量[常量+变量]      基址为sp+偏移量
-                LOAD_RS2;
-                // 组内偏移量 = 下标*4【左移2位】
-                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SLLI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(2) + "\n");
-                // 偏移量相加
-                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(offset) + "\n");
-                // 基址设为sp+偏移量，存在rs2中
-                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADD) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + ",sp\n");
-                // save
-                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
+            if (!isParam){
+                /* 已找到,是局部变量  偏移量=数组偏移量[常量]+数组内偏移量*/
+                rv::rv_inst *op_inst = new rv::rv_inst();
+
+                if (inst.op2.type == ir::Type::IntLiteral)
+                {
+                    // 组内偏移量为立即数[常量+常量]    基址为sp
+                    offset += std::stoi(inst.op2.name) * 4;
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(sp)\n");
+                }
+                else
+                {
+                    // 组内偏移量为变量[常量+变量]      基址为sp+偏移量
+                    LOAD_RS2;
+                    // 组内偏移量 = 下标*4【左移2位】
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SLLI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(2) + "\n");
+                    // 偏移量相加
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(offset) + "\n");
+                    // 基址设为sp+偏移量，存在rs2中
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADD) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + ",sp\n");
+                    // save
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
+                }
+            }else{
+                /* 已找到,是函数实参  基址为数组地址*/
+                rv::rv_inst *op_inst = new rv::rv_inst();
+
+                if (inst.op2.type == ir::Type::IntLiteral)
+                {
+                    // 组内偏移量为立即数    基址为数组地址
+                    // load数组地址
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(sp)\n");
+                    // 重置偏移量为组内偏移量
+                    offset = std::stoi(inst.op2.name) * 4;
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(" + rv::toString(rd) + ")\n");
+                }
+                else
+                {
+                    // 组内偏移量为变量    基址为数组地址
+                    LOAD_RS2;
+                    // 组内偏移量 = 下标*4【左移2位】
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SLLI) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + std::to_string(2) + "\n");
+                    // load数组地址,存入rs1中
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rs1) + "," + std::to_string(offset) + "(sp)\n");
+                    // 基址设为数组+组内偏移量，存在rs2中
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADD) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," +  rv::toString(rs1) + "\n");
+                    // save
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
+                }
             }
         }
     }
@@ -1010,7 +1088,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
 
     case ir::Operator::alloc:
     {
-        if (!is_global_func)
+        if (func.name != "globalFunc")
         { // globalfunc中的数组不需要再分配空间，直接是存在静态区的
             uint32_t size = 4 * std::stoi(inst.op1.name);
             stackmap.add_operand(inst.des, size);
@@ -1075,7 +1153,13 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
             }
             else
             { /* 已找到 */
-                tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a" + std::to_string(i) + "," + std::to_string(offset) + "(sp)" + "\n");
+                if (callinst->argumentList[i].type == ir::Type::IntPtr){
+                    // 参数为数组地址【offset + sp】
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI)+ "\t" + "a" + std::to_string(i) + "," + "sp" + "," + std::to_string(offset) + "\n");
+                }else{
+                    // 参数为普通变量
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a" + std::to_string(i) + "," + std::to_string(offset) + "(sp)" + "\n");
+                }
             }
         }
 
