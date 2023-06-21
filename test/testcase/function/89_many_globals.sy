@@ -1,5 +1,4 @@
 // Call a func with many params.
-/*
 int a0;
 int a1;
 int a2;
@@ -130,4 +129,3 @@ int main() {
     putint(a0);
     return 0;
 }
-*/

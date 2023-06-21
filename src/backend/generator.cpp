@@ -722,15 +722,15 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
 
         tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "," + rv::toString(op_inst->rs2) + "\n");
 
-        // // NOT
-        // op_inst->op = rv::rvOPCODE::NOT;
-        // XORI
-        op_inst->op = rv::rvOPCODE::XORI;
+        // SEQZ
+        op_inst->op = rv::rvOPCODE::SEQZ;
+        // // XORI
+        // op_inst->op = rv::rvOPCODE::XORI;
         op_inst->rs1 = rd;
         op_inst->rd = rd;
 
-        // tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
-        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + ",1\n");
+        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
+        // tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + ",1\n");
         SAVE_BACK_RD;
     }
     break;
@@ -751,15 +751,15 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
 
         tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "," + rv::toString(op_inst->rs2) + "\n");
 
-        // // NOT
-        // op_inst->op = rv::rvOPCODE::NOT;
-        // XORI
-        op_inst->op = rv::rvOPCODE::XORI;
+        // SEQZ
+        op_inst->op = rv::rvOPCODE::SEQZ;
+        // // XORI
+        // op_inst->op = rv::rvOPCODE::XORI;
         op_inst->rs1 = rd;
         op_inst->rd = rd;
 
-        // tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
-        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + ",1\n");
+        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
+        // tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + ",1\n");
         SAVE_BACK_RD;
     }
     break;
@@ -825,15 +825,15 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
 
         rv::rv_inst *op_inst = new rv::rv_inst();
 
-        // // SEQZ
-        // op_inst->op = rv::rvOPCODE::SEQZ;
-        // XORI
-        op_inst->op = rv::rvOPCODE::XORI;
-        op_inst->rs1 = rd;
+        // SEQZ
+        op_inst->op = rv::rvOPCODE::SEQZ;
+        // // XORI
+        // op_inst->op = rv::rvOPCODE::XORI;
+        op_inst->rs1 = rs1;
         op_inst->rd = rd;
 
-        // tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
-        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + ",1\n");
+        tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + "\n");
+        // tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs1) + ",1\n");
 
         SAVE_BACK_RD;
     }
@@ -1062,11 +1062,11 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
                 if (inst.op2.type == ir::Type::IntLiteral)
                 {
                     // 组内偏移量为立即数    基址为数组地址
-                    // load数组地址
-                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(sp)\n");
+                    // load数组地址,存入rs1中
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rs1) + "," + std::to_string(offset) + "(sp)\n");
                     // 重置偏移量为组内偏移量
                     offset = std::stoi(inst.op2.name) * 4;
-                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(" + rv::toString(rd) + ")\n");
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + "," + std::to_string(offset) + "(" + rv::toString(rs1) + ")\n");
                 }
                 else
                 {
