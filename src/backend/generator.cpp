@@ -669,9 +669,6 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
         case ir::Operator::lss:
             op_inst->op = rv::rvOPCODE::SLT;
             break;
-        case ir::Operator::_not:
-            op_inst->op = rv::rvOPCODE::NOT;
-            break;
         default:
             assert(0 && "No Such Kind Of rvOPCODE");
             break;
@@ -782,10 +779,13 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
 
         // SEQZ
         op_inst->op = rv::rvOPCODE::SEQZ;
+        // // SLTIU
+        // op_inst->op = rv::rvOPCODE::SLTIU;
         op_inst->rs2 = rd;
         op_inst->rd = rd;
 
         tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs2) + "\n");
+        // tmp_out.push_back("\t" + rv::toString(op_inst->op) + "\t" + rv::toString(op_inst->rd) + "," + rv::toString(op_inst->rs2) + ",1\n");
         SAVE_BACK_RD;
         // std::cout << tmp_out;
     }
@@ -1153,9 +1153,22 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
             }
             else
             { /* 已找到 */
+                // 判断是否是函数的参数【参数存放的是栈中的地址】
+                bool isParam = false;
+                for (int j = 0; j < func.ParameterList.size();j++){
+                    if (callinst->argumentList[i].name == func.ParameterList[j].name){
+                        isParam = true;
+                        break;
+                    }
+                }
                 if (callinst->argumentList[i].type == ir::Type::IntPtr){
-                    // 参数为数组地址【offset + sp】
-                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI)+ "\t" + "a" + std::to_string(i) + "," + "sp" + "," + std::to_string(offset) + "\n");
+                    if (!isParam){
+                        // 参数为数组地址【offset + sp】
+                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI)+ "\t" + "a" + std::to_string(i) + "," + "sp" + "," + std::to_string(offset) + "\n");
+                    }else{
+                        // 参数为offset(sp)中存入的真实地址
+                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a" + std::to_string(i) + "," + std::to_string(offset) + "(sp)" + "\n");
+                    }
                 }else{
                     // 参数为普通变量
                     tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a" + std::to_string(i) + "," + std::to_string(offset) + "(sp)" + "\n");
@@ -1164,7 +1177,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
         }
 
         // call     inst.op1.name为函数名，即标签   ra为返回地址【pc+8,因为call为伪指令，实际翻译为两条汇编】
-        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::CALL) + "\t" + "ra" + "," + inst.op1.name + "\n");
+        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::CALL) + "\t"  + inst.op1.name + "\n");
 
         // 最后取返回值     返回值在寄存器a0中
         int offset = stackmap.find_operand(inst.des);
