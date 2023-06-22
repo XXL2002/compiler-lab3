@@ -484,6 +484,7 @@ void backend::Generator::gen()
         }
         else
         {
+            // fout << "\t.data\n";
             assert(program.globalVal[i].val.type == ir::Type::IntPtr);
             // 数组
             fout << "\t.globl\t" << varname << "\n";
@@ -496,8 +497,15 @@ void backend::Generator::gen()
             std::cout << "\t.align\t4\n";
             fout << varname << ":\n";
             std::cout << varname << ":\n";
+            // fout << "\t.word\t0";
+            // for (int j = 1; j < program.globalVal[i].maxlen;j++){
+            //     fout << ",0";
+            // }
+            // fout<<"\n";
             fout << "\t.space\t" << std::to_string(program.globalVal[i].maxlen * 4) << "\n";
             std::cout << "\t.space\t" << std::to_string(program.globalVal[i].maxlen * 4) << "\n";
+            // fout << "\t.word\t0\n";
+            // std::cout << "\t.word\t0\n";
         }
     }
     // .text
@@ -550,7 +558,7 @@ void backend::Generator::gen_func(ir::Function &func)
     //     }
     // }
 
-    // 处理其中的goto指令【补充off + "\n"】
+    // 处理其中的goto指令【补充off + "\n"】和 return指令
     for (int i = 0; i < func.InstVec.size(); i++)
     {
         if (func.InstVec[i]->op == ir::Operator::_goto)
@@ -585,6 +593,11 @@ void backend::Generator::gen_func(ir::Function &func)
             // }
             std::string tmp = func.name + "_" + std::to_string(i+ir_off) + "\n";
             tmp_inst_vec[i].back() += tmp;
+        }
+        else if (func.InstVec[i]->op == ir::Operator::_return){
+            tmp_inst_vec[i].push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "ra" + "," + std::to_string(stackmap.cur_off) + "(sp)" + "\n");
+            tmp_inst_vec[i].push_back("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + "sp" + "," + "sp" + "," + std::to_string(stackmap.cur_off + 4) + "\n");
+            tmp_inst_vec[i].push_back("\t" + rv::toString(rv::rvOPCODE::JR) + "\t" + "ra" + "\n");
         }
     }
     // std::cout << "after\n";
@@ -1224,13 +1237,13 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
             tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a0" + "," + std::to_string(offset) + "(sp)" + "\n");
         }
 
-        // jr ra
-        // 从栈中取返回地址放于ra
-        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "ra" + "," + std::to_string(stackmap.cur_off) + "(sp)" + "\n");
-        // 释放占空间【包括额外保存的返回地址】
-        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + "sp" + "," + "sp" + "," + std::to_string(stackmap.cur_off + 4) + "\n");
-        // 跳转返回
-        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::JR) + "\t" + "ra" + "\n");
+        // // jr ra
+        // // 从栈中取返回地址放于ra
+        // tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "ra" + "," + std::to_string(stackmap.cur_off) + "(sp)" + "\n");
+        // // 释放占空间【包括额外保存的返回地址】
+        // tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + "sp" + "," + "sp" + "," + std::to_string(stackmap.cur_off + 4) + "\n");
+        // // 跳转返回
+        // tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::JR) + "\t" + "ra" + "\n");
         // std::cout << tmp_out.size() << "<---\n";
         // for (int i = 0; i < tmp_out.size();i++){
         //     std::cout << tmp_out[i];
