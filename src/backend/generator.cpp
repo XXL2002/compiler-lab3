@@ -910,9 +910,19 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
                 tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs1) + "," + inst.op1.name + "\n");
                 if (inst.op2.type == ir::Type::IntLiteral)
                 {
-                    // 组内偏移量为立即数【*4】，直接load     基址为标签地址
-                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + std::to_string(std::stoi(inst.op2.name) * 4) + "(" + rv::toString(rs1) + ")\n");
-                    SAVE_BACK_RD;
+                    // 判断是否直接用立即数偏移     【***坑点：offset只有12位位宽，且为有符号数，超过2044即溢出】
+                    if (std::stoi(inst.op2.name) * 4>=2048){
+                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LI) + "\t" + rv::toString(rs2) + "," + std::to_string(std::stoi(inst.op2.name) * 4) + "\n");
+                        // 基址设为标签地址+偏移量，存在rs2中
+                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADD) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + rv::toString(rs1) + "\n");
+                        // load
+                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
+                        SAVE_BACK_RD;
+                    }else{
+                        // 组内偏移量为立即数【*4】，直接load     基址为标签地址    
+                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + std::to_string(std::stoi(inst.op2.name) * 4) + "(" + rv::toString(rs1) + ")\n");
+                        SAVE_BACK_RD;
+                    }
                 }
                 else
                 {
@@ -1015,8 +1025,18 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
                 tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(rs1) + "," + inst.op1.name + "\n");
                 if (inst.op2.type == ir::Type::IntLiteral)
                 {
-                    // 组内偏移量为立即数【*4】，直接load     基址为标签地址
-                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + "," + std::to_string(std::stoi(inst.op2.name) * 4) + "(" + rv::toString(rs1) + ")\n");
+                    // 判断是否直接用立即数偏移     【***坑点：offset只有12位位宽，且为有符号数，超过2044即溢出】
+                    if (std::stoi(inst.op2.name) * 4>=2048){
+                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LI) + "\t" + rv::toString(rs2) + "," + std::to_string(std::stoi(inst.op2.name) * 4) + "\n");
+                        // 基址设为标签地址+偏移量，存在rs2中
+                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADD) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + rv::toString(rs1) + "\n");
+                        // save
+                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
+                    }else{
+                        // 组内偏移量为立即数【*4】，直接store     基址为标签地址    
+                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + "," + std::to_string(std::stoi(inst.op2.name) * 4) + "(" + rv::toString(rs1) + ")\n");
+                        
+                    }
                 }
                 else
                 {
@@ -1150,9 +1170,14 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
             { /* 未在局部变量中找到*/
                 if (find_operand_global(callinst->argumentList[i]))
                 { /* 在全局变量中找到，直接用标签 */
-                    rv::rvREG tmp = getRd(inst.op1);
-                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(tmp) + "," + callinst->argumentList[i].name + "\n");
-                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a" + std::to_string(i) + "," + "0(" + rv::toString(tmp) + ")\n");
+                    if(callinst->argumentList[i].type == ir::Type::Int){
+                        rv::rvREG tmp = getRd(inst.op1);
+                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(tmp) + "," + callinst->argumentList[i].name + "\n");
+                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a" + std::to_string(i) + "," + "0(" + rv::toString(tmp) + ")\n");
+                    }else{
+                        // 全局数组，传标签地址
+                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + "a" + std::to_string(i) + "," + callinst->argumentList[i].name + "\n");
+                    }
                 }
                 else
                 { /* 在全局变量中未找到 */
