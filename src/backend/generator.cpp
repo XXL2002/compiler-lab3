@@ -1230,8 +1230,8 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
         else
         {
             // 参数过多
-            // 开辟临时栈区，存放参数
-            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\ta1,sp," + std::to_string(callinst->argumentList.size() * 4) + "\n");
+            // 开辟临时栈区，存放参数[此处可能存在问题，暂时只为其加2000空间，以避免覆盖返回地址]
+            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\ta1,sp," + std::to_string(2000) + "\n");
             // tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::MV) + "\ta1,sp\n");
             for (int i = 0; i < callinst->argumentList.size(); i++)
             {
