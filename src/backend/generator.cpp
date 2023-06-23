@@ -536,8 +536,20 @@ void backend::Generator::gen_func(ir::Function &func)
     for (int i = 0; i < func.ParameterList.size(); i++)
     {
         int offset = stackmap.add_operand(func.ParameterList[i]);
-        tmp_var += ("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a" + std::to_string(i) + "," + std::to_string(offset) + "(sp)\n");
+        if (func.ParameterList.size()<=8)
+        {
+            tmp_var += ("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a" + std::to_string(i) + "," + std::to_string(offset) + "(sp)\n");
+        }
+        else
+        {
+            tmp_var += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a0" + "," + std::to_string(i*4) + "(a1)\n");
+            tmp_var += ("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a0" + "," + std::to_string(offset) + "(sp)\n");
+        }
     }
+    // if (func.ParameterList.size()>8)
+    // {
+    //     fout << ("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + "sp,sp," + std::to_string(func.ParameterList.size() * 4) + "\n");
+    // }
     std::cout << "Param Bingo!\n";
     // 分析指令，暂存
     auto tmp_inst_vec = *new std::vector<std::vector<std::string> >;
@@ -1161,57 +1173,128 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
     case ir::Operator::call:
     {
         auto callinst = dynamic_cast<ir::CallInst *>(&inst);
-        // 先将参数保存在寄存器a0-a7中[查arguementlist]，gen_function中callee在处理完ABI后先将caller传来的参数压栈
-        for (int i = 0; i < callinst->argumentList.size(); i++)
+        if (callinst->argumentList.size()<=8)
         {
-            assert(i <= 7);
-            int offset = stackmap.find_operand(callinst->argumentList[i]);
-            if (offset == -1)
-            { /* 未在局部变量中找到*/
-                if (find_operand_global(callinst->argumentList[i]))
-                { /* 在全局变量中找到，直接用标签 */
-                    if(callinst->argumentList[i].type == ir::Type::Int){
-                        rv::rvREG tmp = getRd(inst.op1);
-                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(tmp) + "," + callinst->argumentList[i].name + "\n");
-                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a" + std::to_string(i) + "," + "0(" + rv::toString(tmp) + ")\n");
-                    }else{
-                        // 全局数组，传标签地址
-                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + "a" + std::to_string(i) + "," + callinst->argumentList[i].name + "\n");
+            // 先将参数保存在寄存器a0-a7中[查arguementlist]，gen_function中callee在处理完ABI后先将caller传来的参数压栈
+            for (int i = 0; i < callinst->argumentList.size(); i++)
+            {
+                int offset = stackmap.find_operand(callinst->argumentList[i]);
+                if (offset == -1)
+                { /* 未在局部变量中找到*/
+                    if (find_operand_global(callinst->argumentList[i]))
+                    { /* 在全局变量中找到，直接用标签 */
+                        if(callinst->argumentList[i].type == ir::Type::Int){
+                            rv::rvREG tmp = getRd(inst.op1);
+                            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(tmp) + "," + callinst->argumentList[i].name + "\n");
+                            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a" + std::to_string(i) + "," + "0(" + rv::toString(tmp) + ")\n");
+                        }else{
+                            // 全局数组，传标签地址
+                            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + "a" + std::to_string(i) + "," + callinst->argumentList[i].name + "\n");
+                        }
+                    }
+                    else
+                    { /* 在全局变量中未找到 */
+                        // 可能是常量
+                        if (callinst->argumentList[i].type != ir::Type::IntLiteral)
+                        {
+                            assert(0 && "Can Not Find The Param");
+                        }
+                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LI) + "\t" + "a" + std::to_string(i) + "," + callinst->argumentList[i].name + "\n");
                     }
                 }
                 else
-                { /* 在全局变量中未找到 */
-                    // 可能是常量
-                    if (callinst->argumentList[i].type != ir::Type::IntLiteral)
-                    {
-                        assert(0 && "Can Not Find The Param");
+                { /* 已找到 */
+                    // 判断是否是函数的参数【参数存放的是栈中的地址】
+                    bool isParam = false;
+                    for (int j = 0; j < func.ParameterList.size();j++){
+                        if (callinst->argumentList[i].name == func.ParameterList[j].name){
+                            isParam = true;
+                            break;
+                        }
                     }
-                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LI) + "\t" + "a" + std::to_string(i) + "," + callinst->argumentList[i].name + "\n");
-                }
-            }
-            else
-            { /* 已找到 */
-                // 判断是否是函数的参数【参数存放的是栈中的地址】
-                bool isParam = false;
-                for (int j = 0; j < func.ParameterList.size();j++){
-                    if (callinst->argumentList[i].name == func.ParameterList[j].name){
-                        isParam = true;
-                        break;
-                    }
-                }
-                if (callinst->argumentList[i].type == ir::Type::IntPtr){
-                    if (!isParam){
-                        // 参数为数组地址【offset + sp】
-                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI)+ "\t" + "a" + std::to_string(i) + "," + "sp" + "," + std::to_string(offset) + "\n");
+                    if (callinst->argumentList[i].type == ir::Type::IntPtr){
+                        if (!isParam){
+                            // 参数为数组地址【offset + sp】
+                            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI)+ "\t" + "a" + std::to_string(i) + "," + "sp" + "," + std::to_string(offset) + "\n");
+                        }else{
+                            // 参数为offset(sp)中存入的真实地址
+                            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a" + std::to_string(i) + "," + std::to_string(offset) + "(sp)" + "\n");
+                        }
                     }else{
-                        // 参数为offset(sp)中存入的真实地址
+                        // 参数为普通变量
                         tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a" + std::to_string(i) + "," + std::to_string(offset) + "(sp)" + "\n");
                     }
-                }else{
-                    // 参数为普通变量
-                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a" + std::to_string(i) + "," + std::to_string(offset) + "(sp)" + "\n");
                 }
             }
+        }
+        else
+        {
+            // 参数过多
+            // 开辟临时栈区，存放参数
+            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\ta1,sp," + std::to_string(callinst->argumentList.size() * 4) + "\n");
+            // tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::MV) + "\ta1,sp\n");
+            for (int i = 0; i < callinst->argumentList.size(); i++)
+            {
+                int offset = stackmap.find_operand(callinst->argumentList[i]);
+                if (offset == -1)
+                { /* 未在局部变量中找到*/
+                    if (find_operand_global(callinst->argumentList[i]))
+                    { /* 在全局变量中找到，直接用标签 */
+                        if(callinst->argumentList[i].type == ir::Type::Int){
+                            rv::rvREG tmp = getRd(inst.op1);
+                            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(tmp) + "," + callinst->argumentList[i].name + "\n");
+                            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a0" + "," + "0(" + rv::toString(tmp) + ")\n");
+                            // 将值存入临时栈中
+                            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a0" + "," + std::to_string(i * 4) + "(a1)\n");
+                        }else{
+                            // 全局数组，传标签地址
+                            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + "a0" + "," + callinst->argumentList[i].name + "\n");
+                            // 将值存入临时栈中
+                            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a0" + "," + std::to_string(i * 4) + "(a1)\n");
+                        }
+                    }
+                    else
+                    { /* 在全局变量中未找到 */
+                        // 可能是常量
+                        if (callinst->argumentList[i].type != ir::Type::IntLiteral)
+                        {
+                            assert(0 && "Can Not Find The Param");
+                        }
+                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LI) + "\t" + "a0" + "," + callinst->argumentList[i].name + "\n");
+                        // 将值存入临时栈中
+                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a0" + "," + std::to_string(i * 4) + "(a1)\n");
+                    }
+                }
+                else
+                { /* 已找到 */
+                    // 判断是否是函数的参数【参数存放的是栈中的地址】
+                    bool isParam = false;
+                    for (int j = 0; j < func.ParameterList.size();j++){
+                        if (callinst->argumentList[i].name == func.ParameterList[j].name){
+                            isParam = true;
+                            break;
+                        }
+                    }
+                    if (callinst->argumentList[i].type == ir::Type::IntPtr){
+                        if (!isParam){
+                            // 参数为数组地址【offset + sp】
+                            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI)+ "\t" + "a0" + "," + "sp" + "," + std::to_string(offset) + "\n");
+                            // 将值存入临时栈中
+                            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a0" + "," + std::to_string(i * 4) + "(a1)\n");
+                        }else{
+                            // 参数为offset(sp)中存入的真实地址
+                            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a0" + "," + std::to_string(offset) + "(sp)" + "\n");
+                            // 将值存入临时栈中
+                            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a0" + "," + std::to_string(i * 4) + "(a1)\n");
+                        }
+                    }else{
+                        // 参数为普通变量
+                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a0" + "," + std::to_string(offset) + "(sp)" + "\n");
+                        // 将值存入临时栈中
+                        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a0" + "," + std::to_string(i * 4) + "(a1)\n");
+                    }
+                }
+            }            
         }
 
         // call     inst.op1.name为函数名，即标签   ra为返回地址【pc+8,因为call为伪指令，实际翻译为两条汇编】
