@@ -536,13 +536,13 @@ void backend::Generator::gen_func(ir::Function &func)
     for (int i = 0; i < func.ParameterList.size(); i++)
     {
         int offset = stackmap.add_operand(func.ParameterList[i]);
-        if (func.ParameterList.size()<=8)
+        if (func.ParameterList.size() <= 8)
         {
             tmp_var += ("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a" + std::to_string(i) + "," + std::to_string(offset) + "(sp)\n");
         }
         else
         {
-            tmp_var += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a0" + "," + std::to_string(i*4) + "(a1)\n");
+            tmp_var += ("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a0" + "," + std::to_string(i * 4) + "(a1)\n");
             tmp_var += ("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a0" + "," + std::to_string(offset) + "(sp)\n");
         }
     }
@@ -552,7 +552,7 @@ void backend::Generator::gen_func(ir::Function &func)
     // }
     std::cout << "Param Bingo!\n";
     // 分析指令，暂存
-    auto tmp_inst_vec = *new std::vector<std::vector<std::string> >;
+    auto tmp_inst_vec = *new std::vector<std::vector<std::string>>;
     for (int i = 0; i < func.InstVec.size(); i++)
     {
         auto tmp_inst = *new std::vector<std::string>;
@@ -603,10 +603,11 @@ void backend::Generator::gen_func(ir::Function &func)
             //     tmp_inst_vec[i].back() += std::to_string(-rv_off * 4);
             //     tmp_inst_vec[i].back() += "\n";
             // }
-            std::string tmp = func.name + "_" + std::to_string(i+ir_off) + "\n";
+            std::string tmp = func.name + "_" + std::to_string(i + ir_off) + "\n";
             tmp_inst_vec[i].back() += tmp;
         }
-        else if (func.InstVec[i]->op == ir::Operator::_return){
+        else if (func.InstVec[i]->op == ir::Operator::_return)
+        {
             tmp_inst_vec[i].push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "ra" + "," + std::to_string(stackmap.cur_off) + "(sp)" + "\n");
             tmp_inst_vec[i].push_back("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + "sp" + "," + "sp" + "," + std::to_string(stackmap.cur_off + 4) + "\n");
             tmp_inst_vec[i].push_back("\t" + rv::toString(rv::rvOPCODE::JR) + "\t" + "ra" + "\n");
@@ -923,15 +924,18 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
                 if (inst.op2.type == ir::Type::IntLiteral)
                 {
                     // 判断是否直接用立即数偏移     【***坑点：offset只有12位位宽，且为有符号数，超过2044即溢出】
-                    if (std::stoi(inst.op2.name) * 4>=2048){
+                    if (std::stoi(inst.op2.name) * 4 >= 2048)
+                    {
                         tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LI) + "\t" + rv::toString(rs2) + "," + std::to_string(std::stoi(inst.op2.name) * 4) + "\n");
                         // 基址设为标签地址+偏移量，存在rs2中
                         tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADD) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + rv::toString(rs1) + "\n");
                         // load
                         tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
                         SAVE_BACK_RD;
-                    }else{
-                        // 组内偏移量为立即数【*4】，直接load     基址为标签地址    
+                    }
+                    else
+                    {
+                        // 组内偏移量为立即数【*4】，直接load     基址为标签地址
                         tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + "," + std::to_string(std::stoi(inst.op2.name) * 4) + "(" + rv::toString(rs1) + ")\n");
                         SAVE_BACK_RD;
                     }
@@ -958,13 +962,16 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
         {
             // 判断是否是函数的参数【参数存放的是栈中的地址】
             bool isParam = false;
-            for (int i = 0; i < func.ParameterList.size();i++){
-                if (inst.op1.name == func.ParameterList[i].name){
+            for (int i = 0; i < func.ParameterList.size(); i++)
+            {
+                if (inst.op1.name == func.ParameterList[i].name)
+                {
                     isParam = true;
                     break;
                 }
             }
-            if (!isParam){
+            if (!isParam)
+            {
                 /* 已找到,是局部变量  偏移量=数组偏移量[常量]+数组内偏移量*/
                 rv::rv_inst *op_inst = new rv::rv_inst();
 
@@ -989,8 +996,10 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
                     tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
                     SAVE_BACK_RD;
                 }
-            }else{
-                // 已找到，是函数实参   
+            }
+            else
+            {
+                // 已找到，是函数实参
                 rv::rv_inst *op_inst = new rv::rv_inst();
 
                 if (inst.op2.type == ir::Type::IntLiteral)
@@ -1038,16 +1047,18 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
                 if (inst.op2.type == ir::Type::IntLiteral)
                 {
                     // 判断是否直接用立即数偏移     【***坑点：offset只有12位位宽，且为有符号数，超过2044即溢出】
-                    if (std::stoi(inst.op2.name) * 4>=2048){
+                    if (std::stoi(inst.op2.name) * 4 >= 2048)
+                    {
                         tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LI) + "\t" + rv::toString(rs2) + "," + std::to_string(std::stoi(inst.op2.name) * 4) + "\n");
                         // 基址设为标签地址+偏移量，存在rs2中
                         tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADD) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + rv::toString(rs1) + "\n");
                         // save
                         tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
-                    }else{
-                        // 组内偏移量为立即数【*4】，直接store     基址为标签地址    
+                    }
+                    else
+                    {
+                        // 组内偏移量为立即数【*4】，直接store     基址为标签地址
                         tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + "," + std::to_string(std::stoi(inst.op2.name) * 4) + "(" + rv::toString(rs1) + ")\n");
-                        
                     }
                 }
                 else
@@ -1068,16 +1079,19 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
             }
         }
         else
-        { 
+        {
             // 判断是否是函数的参数【参数存放的是栈中的地址】
             bool isParam = false;
-            for (int i = 0; i < func.ParameterList.size();i++){
-                if (inst.op1.name == func.ParameterList[i].name){
+            for (int i = 0; i < func.ParameterList.size(); i++)
+            {
+                if (inst.op1.name == func.ParameterList[i].name)
+                {
                     isParam = true;
                     break;
                 }
             }
-            if (!isParam){
+            if (!isParam)
+            {
                 /* 已找到,是局部变量  偏移量=数组偏移量[常量]+数组内偏移量*/
                 rv::rv_inst *op_inst = new rv::rv_inst();
 
@@ -1100,7 +1114,9 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
                     // save
                     tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
                 }
-            }else{
+            }
+            else
+            {
                 /* 已找到,是函数实参  基址为数组地址*/
                 rv::rv_inst *op_inst = new rv::rv_inst();
 
@@ -1122,7 +1138,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
                     // load数组地址,存入rs1中
                     tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + rv::toString(rs1) + "," + std::to_string(offset) + "(sp)\n");
                     // 基址设为数组+组内偏移量，存在rs2中
-                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADD) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," +  rv::toString(rs1) + "\n");
+                    tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADD) + "\t" + rv::toString(rs2) + "," + rv::toString(rs2) + "," + rv::toString(rs1) + "\n");
                     // save
                     tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + rv::toString(rd) + ",0(" + rv::toString(rs2) + ")\n");
                 }
@@ -1173,7 +1189,7 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
     case ir::Operator::call:
     {
         auto callinst = dynamic_cast<ir::CallInst *>(&inst);
-        if (callinst->argumentList.size()<=8)
+        if (callinst->argumentList.size() <= 8)
         {
             // 先将参数保存在寄存器a0-a7中[查arguementlist]，gen_function中callee在处理完ABI后先将caller传来的参数压栈
             for (int i = 0; i < callinst->argumentList.size(); i++)
@@ -1183,11 +1199,14 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
                 { /* 未在局部变量中找到*/
                     if (find_operand_global(callinst->argumentList[i]))
                     { /* 在全局变量中找到，直接用标签 */
-                        if(callinst->argumentList[i].type == ir::Type::Int){
+                        if (callinst->argumentList[i].type == ir::Type::Int)
+                        {
                             rv::rvREG tmp = getRd(inst.op1);
                             tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(tmp) + "," + callinst->argumentList[i].name + "\n");
                             tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a" + std::to_string(i) + "," + "0(" + rv::toString(tmp) + ")\n");
-                        }else{
+                        }
+                        else
+                        {
                             // 全局数组，传标签地址
                             tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + "a" + std::to_string(i) + "," + callinst->argumentList[i].name + "\n");
                         }
@@ -1206,21 +1225,29 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
                 { /* 已找到 */
                     // 判断是否是函数的参数【参数存放的是栈中的地址】
                     bool isParam = false;
-                    for (int j = 0; j < func.ParameterList.size();j++){
-                        if (callinst->argumentList[i].name == func.ParameterList[j].name){
+                    for (int j = 0; j < func.ParameterList.size(); j++)
+                    {
+                        if (callinst->argumentList[i].name == func.ParameterList[j].name)
+                        {
                             isParam = true;
                             break;
                         }
                     }
-                    if (callinst->argumentList[i].type == ir::Type::IntPtr){
-                        if (!isParam){
+                    if (callinst->argumentList[i].type == ir::Type::IntPtr)
+                    {
+                        if (!isParam)
+                        {
                             // 参数为数组地址【offset + sp】
-                            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI)+ "\t" + "a" + std::to_string(i) + "," + "sp" + "," + std::to_string(offset) + "\n");
-                        }else{
+                            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + "a" + std::to_string(i) + "," + "sp" + "," + std::to_string(offset) + "\n");
+                        }
+                        else
+                        {
                             // 参数为offset(sp)中存入的真实地址
                             tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a" + std::to_string(i) + "," + std::to_string(offset) + "(sp)" + "\n");
                         }
-                    }else{
+                    }
+                    else
+                    {
                         // 参数为普通变量
                         tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a" + std::to_string(i) + "," + std::to_string(offset) + "(sp)" + "\n");
                     }
@@ -1240,13 +1267,16 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
                 { /* 未在局部变量中找到*/
                     if (find_operand_global(callinst->argumentList[i]))
                     { /* 在全局变量中找到，直接用标签 */
-                        if(callinst->argumentList[i].type == ir::Type::Int){
+                        if (callinst->argumentList[i].type == ir::Type::Int)
+                        {
                             rv::rvREG tmp = getRd(inst.op1);
                             tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + rv::toString(tmp) + "," + callinst->argumentList[i].name + "\n");
                             tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a0" + "," + "0(" + rv::toString(tmp) + ")\n");
                             // 将值存入临时栈中
                             tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a0" + "," + std::to_string(i * 4) + "(a1)\n");
-                        }else{
+                        }
+                        else
+                        {
                             // 全局数组，传标签地址
                             tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LA) + "\t" + "a0" + "," + callinst->argumentList[i].name + "\n");
                             // 将值存入临时栈中
@@ -1269,36 +1299,44 @@ int backend::Generator::gen_instr(ir::Instruction &inst, std::vector<std::string
                 { /* 已找到 */
                     // 判断是否是函数的参数【参数存放的是栈中的地址】
                     bool isParam = false;
-                    for (int j = 0; j < func.ParameterList.size();j++){
-                        if (callinst->argumentList[i].name == func.ParameterList[j].name){
+                    for (int j = 0; j < func.ParameterList.size(); j++)
+                    {
+                        if (callinst->argumentList[i].name == func.ParameterList[j].name)
+                        {
                             isParam = true;
                             break;
                         }
                     }
-                    if (callinst->argumentList[i].type == ir::Type::IntPtr){
-                        if (!isParam){
+                    if (callinst->argumentList[i].type == ir::Type::IntPtr)
+                    {
+                        if (!isParam)
+                        {
                             // 参数为数组地址【offset + sp】
-                            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI)+ "\t" + "a0" + "," + "sp" + "," + std::to_string(offset) + "\n");
+                            tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::ADDI) + "\t" + "a0" + "," + "sp" + "," + std::to_string(offset) + "\n");
                             // 将值存入临时栈中
                             tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a0" + "," + std::to_string(i * 4) + "(a1)\n");
-                        }else{
+                        }
+                        else
+                        {
                             // 参数为offset(sp)中存入的真实地址
                             tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a0" + "," + std::to_string(offset) + "(sp)" + "\n");
                             // 将值存入临时栈中
                             tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a0" + "," + std::to_string(i * 4) + "(a1)\n");
                         }
-                    }else{
+                    }
+                    else
+                    {
                         // 参数为普通变量
                         tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::LW) + "\t" + "a0" + "," + std::to_string(offset) + "(sp)" + "\n");
                         // 将值存入临时栈中
                         tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::SW) + "\t" + "a0" + "," + std::to_string(i * 4) + "(a1)\n");
                     }
                 }
-            }            
+            }
         }
 
         // call     inst.op1.name为函数名，即标签   ra为返回地址【pc+8,因为call为伪指令，实际翻译为两条汇编】
-        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::CALL) + "\t"  + inst.op1.name + "\n");
+        tmp_out.push_back("\t" + rv::toString(rv::rvOPCODE::CALL) + "\t" + inst.op1.name + "\n");
 
         // 最后取返回值     返回值在寄存器a0中
         int offset = stackmap.find_operand(inst.des);
